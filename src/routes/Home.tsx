@@ -8,10 +8,11 @@ import {
   formatClock,
   formatDayLabel,
   formatSlotWindow,
-  STATUS_META,
-  STAGE_OF_STATUS,
+  nextMilestoneText,
+  relevantAt,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { OrderStubCard } from "@/components/OrderStubCard";
 
 type OrderRow = Tables<"orders"> & {
   service_types: { name: string } | null;
@@ -27,74 +28,6 @@ function getGreeting() {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
-}
-
-function nextMilestoneText(order: OrderRow) {
-  const deliveryAt = order.estimated_delivery_at ? new Date(order.estimated_delivery_at) : null;
-
-  switch (order.status) {
-    case "scheduled":
-      if (order.slots) {
-        return `Pickup ${formatDayLabel(new Date(order.slots.date))}, ${formatSlotWindow(order.slots.start_time, order.slots.end_time)}`;
-      }
-      return order.pickup_at ? `Pickup ${formatDayLabel(new Date(order.pickup_at))}` : "Pickup scheduled";
-    case "awaiting_pickup":
-      return "Your partner is on the way to collect it";
-    case "picked_up":
-      return "Collected — heading to the wash";
-    case "washing":
-      return deliveryAt
-        ? `Ready by ${formatDayLabel(deliveryAt)}, around ${formatClock(deliveryAt)}`
-        : "Being washed";
-    case "ready":
-      return "Ready — on its way back to you soon";
-    case "out_for_delivery":
-      return deliveryAt
-        ? `Arriving ${formatDayLabel(deliveryAt)}, around ${formatClock(deliveryAt)}`
-        : "Out for delivery";
-    case "issue_raised":
-      return "We're looking into an issue with this order";
-    default:
-      return "";
-  }
-}
-
-function OrderCard({ order }: { order: OrderRow }) {
-  const meta = STATUS_META[order.status];
-  const stage = STAGE_OF_STATUS[order.status];
-
-  return (
-    <Link
-      to="/orders"
-      className="block shrink-0 basis-[88%] snap-center overflow-hidden rounded-card border border-line bg-card"
-    >
-      <div className="flex">
-        <div className="flex w-[36%] shrink-0 items-center justify-center border-r border-dashed border-line bg-accent/15 px-2 py-6">
-          <p className="font-display text-lg font-bold tabular-nums leading-tight text-ink whitespace-nowrap">
-            {order.order_code}
-          </p>
-        </div>
-        <div className="flex-1 px-4 py-4">
-          <p className="text-base font-semibold text-ink">
-            {order.service_types?.name ?? "Order"}
-          </p>
-          <div className="mt-1.5 flex items-center gap-1.5">
-            <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
-            <span className="text-sm text-muted">{meta.label}</span>
-          </div>
-          <p className="mt-2 text-sm text-ink">{nextMilestoneText(order)}</p>
-        </div>
-      </div>
-      <div className="flex gap-1 px-4 pb-4">
-        {[1, 2, 3, 4].map((seg) => (
-          <div
-            key={seg}
-            className={cn("h-1 flex-1 rounded-full", seg <= stage ? "bg-primary" : "bg-line")}
-          />
-        ))}
-      </div>
-    </Link>
-  );
 }
 
 type UpcomingRow = {
@@ -168,7 +101,11 @@ export function Home() {
 
       if (cancelled) return;
 
-      setOrders((ordersRes.data as OrderRow[] | null) ?? []);
+      setOrders(
+        ((ordersRes.data as OrderRow[] | null) ?? []).sort(
+          (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
+        ),
+      );
       setUnreadCount(unreadRes.count ?? 0);
       setPlanRow((planRes.data as PlanRow | null) ?? null);
 
@@ -293,7 +230,16 @@ export function Home() {
             className="no-scrollbar -mx-screen flex snap-x snap-mandatory gap-3 overflow-x-auto px-screen pb-1"
           >
             {orders.map((order) => (
-              <OrderCard key={order.id} order={order} />
+              <OrderStubCard
+                key={order.id}
+                orderId={order.id}
+                orderCode={order.order_code}
+                serviceName={order.service_types?.name ?? "Order"}
+                status={order.status}
+                milestone={nextMilestoneText(order)}
+                showProgress
+                className="shrink-0 basis-[88%] snap-center"
+              />
             ))}
           </div>
           {orders.length > 1 && (
