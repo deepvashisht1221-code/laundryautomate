@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider: "google",
       options: {
         scopes: "email profile",
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/login`,
       },
     });
     return { error: error ? new Error(error.message) : null };

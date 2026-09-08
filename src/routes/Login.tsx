@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { GoogleMark } from "@/components/GoogleMark";
 
@@ -7,6 +8,8 @@ const PENDING_KEY = "dhobisb.oauthPending";
 
 export function Login() {
   const { status, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSigningIn, setIsSigningIn] = useState(
     () => sessionStorage.getItem(PENDING_KEY) === "1",
   );
@@ -19,6 +22,21 @@ export function Login() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  useEffect(() => {
+    if (status === "signed_in") {
+      navigate("/", { replace: true });
+    }
+  }, [status, navigate]);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
+    if (oauthError) {
+      setSignInError(oauthError);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleContinue() {
     setSignInError(null);
