@@ -11,49 +11,24 @@ import type { Tables } from "@/types/database";
 
 type Profile = Tables<"profiles">;
 
-type AuthStatus =
-  | "loading"
-  | "signed_out"
-  | "domain_not_allowed"
-  | "signed_in";
+type AuthStatus = "loading" | "signed_out" | "signed_in";
 
 type AuthContextValue = {
   status: AuthStatus;
   session: Session | null;
   user: User | null;
   profile: Profile | null;
-  blockedEmail: string | null;
   refreshProfile: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  clearDomainBlock: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-async function isDomainAllowed(email: string | undefined | null) {
-  if (!email || !email.includes("@")) return false;
-  const domain = email.split("@")[1]?.toLowerCase();
-  if (!domain) return false;
-
-  const { data, error } = await supabase
-    .from("allowed_domains")
-    .select("domain")
-    .eq("domain", domain)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Failed to check allowed domain", error);
-    return false;
-  }
-  return Boolean(data);
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [blockedEmail, setBlockedEmail] = useState<string | null>(null);
 
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
@@ -77,17 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const allowed = await isDomainAllowed(nextSession.user.email);
-    if (!allowed) {
-      setBlockedEmail(nextSession.user.email ?? null);
-      await supabase.auth.signOut();
-      setSession(null);
-      setProfile(null);
-      setStatus("domain_not_allowed");
-      return;
-    }
-
-    setBlockedEmail(null);
     const nextProfile = await loadProfile(nextSession.user.id);
     setSession(nextSession);
     setProfile(nextProfile);
@@ -115,11 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(nextProfile);
   }
 
-  async function signInWithMicrosoft() {
+  async function signInWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "azure",
+      provider: "google",
       options: {
-        scopes: "email openid profile",
+        scopes: "email profile",
         redirectTo: window.location.origin,
       },
     });
@@ -133,11 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("signed_out");
   }
 
-  function clearDomainBlock() {
-    setBlockedEmail(null);
-    setStatus("signed_out");
-  }
-
   return (
     <AuthContext.Provider
       value={{
@@ -145,11 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         user: session?.user ?? null,
         profile,
-        blockedEmail,
         refreshProfile,
-        signInWithMicrosoft,
+        signInWithGoogle,
         signOut,
-        clearDomainBlock,
       }}
     >
       {children}

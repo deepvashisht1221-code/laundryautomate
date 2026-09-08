@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      allowed_domains: {
-        Row: {
-          created_at: string
-          domain: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          domain: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          domain?: string
-          id?: string
-        }
-        Relationships: []
-      }
       issues: {
         Row: {
           created_at: string

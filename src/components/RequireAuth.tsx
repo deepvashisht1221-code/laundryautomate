@@ -18,10 +18,6 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (status === "domain_not_allowed") {
-    return <Navigate to="/login" replace />;
-  }
-
   if (profile && !profile.onboarding_complete && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }

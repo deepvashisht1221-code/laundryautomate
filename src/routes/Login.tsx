@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { MicrosoftMark } from "@/components/MicrosoftMark";
+import { GoogleMark } from "@/components/GoogleMark";
 
 const PENDING_KEY = "dhobisb.oauthPending";
 
 export function Login() {
-  const { status, blockedEmail, signInWithMicrosoft, clearDomainBlock } =
-    useAuth();
+  const { status, signInWithGoogle } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(
     () => sessionStorage.getItem(PENDING_KEY) === "1",
   );
@@ -26,21 +25,14 @@ export function Login() {
     setIsSigningIn(true);
     sessionStorage.setItem(PENDING_KEY, "1");
 
-    const { error } = await signInWithMicrosoft();
+    const { error } = await signInWithGoogle();
     if (error) {
       sessionStorage.removeItem(PENDING_KEY);
       setIsSigningIn(false);
-      setSignInError("Couldn't reach Microsoft. Check your connection and try again.");
+      setSignInError("Couldn't reach Google. Check your connection and try again.");
     }
     // On success the browser is redirected away, so nothing else to do here.
   }
-
-  function handleTryDifferentAccount() {
-    clearDomainBlock();
-    setSignInError(null);
-  }
-
-  const showBlocked = status === "domain_not_allowed";
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -61,64 +53,40 @@ export function Login() {
       </div>
 
       <div className="relative flex flex-1 flex-col justify-end px-screen pb-8">
-        {showBlocked ? (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-card border border-line bg-card p-4">
-              <p className="text-base leading-6 text-ink">
-                DhobISB is only open to university accounts. You signed in
-                with {blockedEmail ?? "an account we don't recognize"}.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleTryDifferentAccount}
-              className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground"
-            >
-              Try a different account
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {signInError && (
-              <p className="text-sm text-danger">{signInError}</p>
+        <div className="flex flex-col gap-3">
+          {signInError && <p className="text-sm text-danger">{signInError}</p>}
+
+          <button
+            type="button"
+            onClick={() => {
+              void handleContinue();
+            }}
+            disabled={isSigningIn}
+            className="flex h-[52px] w-full items-center justify-center gap-3 rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-70"
+          >
+            {isSigningIn ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Signing you in
+              </>
+            ) : (
+              <>
+                <GoogleMark className="h-5 w-5" />
+                Continue with Google
+              </>
             )}
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                void handleContinue();
-              }}
-              disabled={isSigningIn}
-              className="flex h-[52px] w-full items-center justify-center gap-3 rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-70"
-            >
-              {isSigningIn ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Signing you in
-                </>
-              ) : (
-                <>
-                  <MicrosoftMark className="h-5 w-5" />
-                  Continue with Microsoft
-                </>
-              )}
-            </button>
-
-            <p className="text-center text-sm text-muted">
-              Use your university account.
-            </p>
-
-            <p className="text-center text-xs text-muted">
-              <a href="/terms" className="underline">
-                Terms
-              </a>
-              <span className="mx-2">·</span>
-              <a href="/privacy" className="underline">
-                Privacy
-              </a>
-            </p>
-          </div>
-        )}
+          <p className="text-center text-xs text-muted">
+            <a href="/terms" className="underline">
+              Terms
+            </a>
+            <span className="mx-2">·</span>
+            <a href="/privacy" className="underline">
+              Privacy
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
