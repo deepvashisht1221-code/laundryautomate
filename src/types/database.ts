@@ -65,6 +65,30 @@ export type Database = {
           },
         ]
       }
+      notices: {
+        Row: {
+          block: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string
+        }
+        Insert: {
+          block?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message: string
+        }
+        Update: {
+          block?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
