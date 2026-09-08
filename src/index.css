@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #10262c;
+  --surface: #f2f6f5;
+  --card: #ffffff;
+  --primary: #0e5c63;
+  --primary-soft: #dcebea;
+  --accent: #f2a007;
+  --muted: #6b8a8e;
+  --line: #dbe5e4;
+  --success: #2f855a;
+  --warning: #c05621;
+  --danger: #b3261e;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: #e7edec;
+  color: var(--ink);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+@media (min-width: 481px) {
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .app-shell {
+    min-height: calc(100dvh - 64px);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -20px rgb(16 38 44 / 0.25);
+    border: 1px solid var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
