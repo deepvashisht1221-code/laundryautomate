@@ -22,9 +22,11 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  blockedEmail: string | null;
   refreshProfile: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
+  signInWithMicrosoft: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  clearDomainBlock: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [blockedEmail, setBlockedEmail] = useState<string | null>(null);
 
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
@@ -76,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const allowed = await isDomainAllowed(nextSession.user.email);
     if (!allowed) {
+      setBlockedEmail(nextSession.user.email ?? null);
       await supabase.auth.signOut();
       setSession(null);
       setProfile(null);
@@ -83,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setBlockedEmail(null);
     const nextProfile = await loadProfile(nextSession.user.id);
     setSession(nextSession);
     setProfile(nextProfile);
@@ -111,19 +116,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithMicrosoft() {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
         scopes: "email openid profile",
         redirectTo: window.location.origin,
       },
     });
+    return { error: error ? new Error(error.message) : null };
   }
 
   async function signOut() {
     await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
+    setStatus("signed_out");
+  }
+
+  function clearDomainBlock() {
+    setBlockedEmail(null);
     setStatus("signed_out");
   }
 
@@ -134,9 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         user: session?.user ?? null,
         profile,
+        blockedEmail,
         refreshProfile,
         signInWithMicrosoft,
         signOut,
+        clearDomainBlock,
       }}
     >
       {children}
