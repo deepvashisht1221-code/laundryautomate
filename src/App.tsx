@@ -4,6 +4,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Login } from "@/routes/Login";
 import { Onboarding } from "@/routes/Onboarding";
+import { Schedule } from "@/routes/Schedule";
 import { Home } from "@/routes/Home";
 import { Orders } from "@/routes/Orders";
 import { Plan } from "@/routes/Plan";
@@ -20,6 +21,14 @@ export function App() {
             element={
               <RequireAuth>
                 <Onboarding />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/schedule"
+            element={
+              <RequireAuth>
+                <Schedule />
               </RequireAuth>
             }
           />

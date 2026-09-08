@@ -327,7 +327,7 @@ export function Home() {
       )}
 
       <Link
-        to="/orders"
+        to="/schedule"
         className="flex h-[52px] w-full items-center justify-center rounded-control bg-primary text-base font-semibold text-primary-foreground"
       >
         Schedule a pickup
