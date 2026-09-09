@@ -11,16 +11,20 @@ const tabs = [
 
 export function BottomTabBar() {
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-line bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <nav
+      className="sticky bottom-0 z-20 border-t border-line bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+      style={{ paddingBottom: "var(--safe-bottom)" }}
+    >
       <ul className="flex items-stretch justify-between px-2">
         {tabs.map(({ to, label, icon: Icon }) => (
           <li key={to} className="flex-1">
             <NavLink
               to={to}
               end={to === "/"}
+              aria-label={label}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                  "flex min-h-11 flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors",
                   isActive ? "text-primary" : "text-muted",
                 )
               }

@@ -116,7 +116,7 @@ export function ProfileEdit() {
           type="button"
           onClick={() => navigate(-1)}
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
         >
           <ChevronLeft size={22} />
         </button>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Bell } from "lucide-react";
 import { isToday, isThisWeek, format } from "date-fns";
@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
 
 type Notification = Tables<"notifications">;
 
@@ -20,25 +22,26 @@ export function Notifications() {
   const navigate = useNavigate();
 
   const [items, setItems] = useState<Notification[] | null>(null);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setError(false);
+    const { data, error: fetchError } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (fetchError) {
+      setError(true);
+      return;
+    }
+    setItems(data ?? []);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-
-    async function load() {
-      const { data } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (!cancelled) setItems(data ?? []);
-    }
-
     load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  }, [load]);
 
   async function markAllRead() {
     if (!user || !items) return;
@@ -83,7 +86,7 @@ export function Notifications() {
           type="button"
           onClick={() => navigate(-1)}
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
         >
           <ChevronLeft size={22} />
         </button>
@@ -94,7 +97,7 @@ export function Notifications() {
             onClick={() => {
               void markAllRead();
             }}
-            className="text-sm font-medium text-primary"
+            className="min-h-11 text-sm font-medium text-primary"
           >
             Mark all as read
           </button>
@@ -102,8 +105,14 @@ export function Notifications() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-screen py-4">
-        {items === null ? (
-          <p className="mt-8 text-center text-sm text-muted">Loading…</p>
+        {error ? (
+          <InlineError message="Couldn't load your notifications." onRetry={load} />
+        ) : items === null ? (
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
         ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 pt-20 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft text-primary">

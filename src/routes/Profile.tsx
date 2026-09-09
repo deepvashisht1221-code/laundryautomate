@@ -7,6 +7,7 @@ import type { Tables, TablesUpdate } from "@/types/database";
 import { initials } from "@/lib/format";
 import { pickupPointLabel } from "@/lib/locations";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
 
 type ServiceType = Pick<Tables<"service_types">, "id" | "name">;
 
@@ -41,13 +42,16 @@ function Toggle({
   label: string;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+    >
       <span className="text-sm text-ink">{label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
+      <span
+        aria-hidden="true"
         className={cn(
           "relative h-6 w-11 shrink-0 rounded-full transition-colors",
           checked ? "bg-primary" : "bg-line",
@@ -59,8 +63,8 @@ function Toggle({
             checked ? "translate-x-[22px]" : "translate-x-0.5",
           )}
         />
-      </button>
-    </label>
+      </span>
+    </button>
   );
 }
 
@@ -150,8 +154,16 @@ export function Profile() {
 
   if (!profile) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <Skeleton className="h-40 w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
       </div>
     );
   }
@@ -230,7 +242,7 @@ export function Profile() {
       <Section
         title="Pickup address"
         action={
-          <Link to="/profile/edit" className="text-sm font-medium text-primary">
+          <Link to="/profile/edit" className="flex min-h-11 items-center text-sm font-medium text-primary">
             Edit
           </Link>
         }
@@ -249,7 +261,7 @@ export function Profile() {
       <Section
         title="Contact"
         action={
-          <Link to="/profile/edit" className="text-sm font-medium text-primary">
+          <Link to="/profile/edit" className="flex min-h-11 items-center text-sm font-medium text-primary">
             Edit
           </Link>
         }
@@ -325,11 +337,15 @@ export function Profile() {
       </Section>
 
       <Section title="Account">
-        <Link to="/plan" className="flex items-center justify-between text-sm">
+        <Link to="/plan" className="flex min-h-11 items-center justify-between text-sm">
           <span className="text-ink">Your plan</span>
           <ChevronRight size={16} className="text-muted" />
         </Link>
-        <div className="flex items-center justify-between text-sm">
+        <Link to="/help" className="flex min-h-11 items-center justify-between text-sm">
+          <span className="text-ink">Help &amp; support</span>
+          <ChevronRight size={16} className="text-muted" />
+        </Link>
+        <div className="flex min-h-11 items-center justify-between text-sm">
           <span className="flex items-center gap-2 text-ink">
             <CreditCard size={16} className="text-muted" />
             Payment methods
@@ -342,7 +358,7 @@ export function Profile() {
             void handleDownloadData();
           }}
           disabled={downloading}
-          className="flex items-center gap-2 text-sm text-ink disabled:opacity-60"
+          className="flex min-h-11 items-center gap-2 text-sm text-ink disabled:opacity-60"
         >
           <Download size={16} className="text-muted" />
           {downloading ? "Preparing your data…" : "Download my data"}
@@ -352,7 +368,7 @@ export function Profile() {
           onClick={() => {
             void handleSignOut();
           }}
-          className="flex items-center gap-2 text-sm text-ink"
+          className="flex min-h-11 items-center gap-2 text-sm text-ink"
         >
           <LogOut size={16} className="text-muted" />
           Sign out
@@ -360,7 +376,7 @@ export function Profile() {
         <button
           type="button"
           onClick={() => setDeleteOpen(true)}
-          className="flex items-center gap-2 text-sm text-danger"
+          className="flex min-h-11 items-center gap-2 text-sm text-danger"
         >
           <Trash2 size={16} />
           Delete account

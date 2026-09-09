@@ -2,6 +2,8 @@ import { Navigate, Route, Routes, useLocation, type Location } from "react-route
 import { AuthProvider } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { ThemeEffect } from "@/components/ThemeEffect";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { Login } from "@/routes/Login";
 import { Onboarding } from "@/routes/Onboarding";
 import { Schedule } from "@/routes/Schedule";
@@ -13,6 +15,7 @@ import { Plan } from "@/routes/Plan";
 import { Profile } from "@/routes/Profile";
 import { ProfileEdit } from "@/routes/ProfileEdit";
 import { Notifications } from "@/routes/Notifications";
+import { Help } from "@/routes/Help";
 
 export function App() {
   const location = useLocation();
@@ -21,7 +24,9 @@ export function App() {
 
   return (
     <AuthProvider>
+      <ThemeEffect />
       <div className="app-shell">
+        <OfflineBanner />
         <Routes location={backgroundLocation ?? location}>
           <Route path="/login" element={<Login />} />
           <Route
@@ -61,6 +66,14 @@ export function App() {
             element={
               <RequireAuth>
                 <ProfileEdit />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <RequireAuth>
+                <Help />
               </RequireAuth>
             }
           />

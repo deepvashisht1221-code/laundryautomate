@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Check } from "lucide-react";
 import { format, addDays, isToday } from "date-fns";
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { formatDayLabel, formatSlotWindow } from "@/lib/format";
 import { ITEM_CATEGORIES, estimatePrice, type ItemCounts } from "@/lib/estimate";
 import { VILLAGE_BLOCKS, FLOORS, PICKUP_POINTS, pickupPointLabel } from "@/lib/locations";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
 
 type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
 
@@ -31,7 +33,7 @@ function Stepper({
   max?: number;
   size?: "md" | "sm";
 }) {
-  const btnSize = size === "md" ? "h-9 w-9 text-lg" : "h-7 w-7 text-base";
+  const btnSize = size === "md" ? "h-11 w-11 text-lg" : "h-11 w-11 text-base";
   return (
     <div className="flex items-center gap-3">
       <button
@@ -227,6 +229,7 @@ export function Schedule() {
   );
 
   const [services, setServices] = useState<Tables<"service_types">[] | null>(null);
+  const [servicesError, setServicesError] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const [bagCount, setBagCount] = useState(1);
@@ -244,14 +247,25 @@ export function Schedule() {
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadServices = useCallback(() => {
+    setServicesError(false);
     supabase
       .from("service_types")
       .select("*")
       .eq("is_active", true)
       .order("price")
-      .then(({ data }) => setServices(data ?? []));
+      .then(({ data, error }) => {
+        if (error) {
+          setServicesError(true);
+          return;
+        }
+        setServices(data ?? []);
+      });
   }, []);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
 
   useEffect(() => {
     if (!user) return;
@@ -430,7 +444,7 @@ export function Schedule() {
           type="button"
           onClick={goBack}
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
         >
           <ChevronLeft size={22} />
         </button>
@@ -441,8 +455,14 @@ export function Schedule() {
         {step === 1 && (
           <div className="flex flex-col gap-3">
             <h1 className="font-display text-xl font-bold text-ink">Choose a service</h1>
-            {services === null ? (
-              <p className="text-sm text-muted">Loading…</p>
+            {servicesError ? (
+              <InlineError message="Couldn't load services." onRetry={loadServices} />
+            ) : services === null ? (
+              <>
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </>
             ) : (
               services.map((s) => {
                 const selected = s.id === selectedServiceId;
@@ -496,7 +516,7 @@ export function Schedule() {
               <button
                 type="button"
                 onClick={goNext}
-                className="mt-1 text-sm text-primary underline"
+                className="mt-1 min-h-11 text-sm text-primary underline"
               >
                 Skip this
               </button>
@@ -598,7 +618,7 @@ export function Schedule() {
                   <button
                     type="button"
                     onClick={() => setAddressSheetOpen(true)}
-                    className="shrink-0 text-sm text-primary underline"
+                    className="shrink-0 min-h-11 text-sm text-primary underline"
                   >
                     Edit
                   </button>

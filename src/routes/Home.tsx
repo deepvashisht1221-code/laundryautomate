@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Package, Truck, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -13,6 +13,10 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { OrderStubCard } from "@/components/OrderStubCard";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
+import { saveCache, loadCache } from "@/lib/offlineCache";
+import { useRegisterRefresh } from "@/lib/refresh-context";
 
 type OrderRow = Tables<"orders"> & {
   service_types: { name: string } | null;
@@ -22,6 +26,7 @@ type OrderRow = Tables<"orders"> & {
 type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
 
 const NOTICE_DISMISS_KEY = "dhobisb.dismissedNoticeId";
+const ORDERS_CACHE_KEY = "home.orders";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -50,87 +55,102 @@ export function Home() {
   const [notice, setNotice] = useState<Tables<"notices"> | null>(null);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [showingCached, setShowingCached] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  useEffect(() => {
+  const fetchHome = useCallback(async () => {
     if (!user || !profile) return;
-    let cancelled = false;
+    setError(false);
+    const today = new Date().toISOString().slice(0, 10);
 
-    async function load() {
-      const today = new Date().toISOString().slice(0, 10);
+    const [ordersRes, unreadRes, planRes, slotRes, noticeRes] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("*, service_types(name), slots(date, start_time, end_time, block)")
+        .eq("user_id", user.id)
+        .not("status", "in", "(delivered,cancelled)"),
+      supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false),
+      supabase
+        .from("user_plans")
+        .select("*, plans(*)")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle(),
+      profile.block
+        ? supabase
+            .from("slots")
+            .select("*")
+            .eq("block", profile.block)
+            .eq("is_open", true)
+            .gte("date", today)
+            .order("date")
+            .order("start_time")
+            .limit(30)
+        : Promise.resolve({ data: [] as Tables<"slots">[] }),
+      profile.block
+        ? supabase
+            .from("notices")
+            .select("*")
+            .eq("is_active", true)
+            .or(`block.is.null,block.eq.${profile.block}`)
+            .order("created_at", { ascending: false })
+            .limit(1)
+        : Promise.resolve({ data: [] as Tables<"notices">[] }),
+    ]);
 
-      const [ordersRes, unreadRes, planRes, slotRes, noticeRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("*, service_types(name), slots(date, start_time, end_time, block)")
-          .eq("user_id", user!.id)
-          .not("status", "in", "(delivered,cancelled)"),
-        supabase
-          .from("notifications")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("is_read", false),
-        supabase
-          .from("user_plans")
-          .select("*, plans(*)")
-          .eq("user_id", user!.id)
-          .eq("is_active", true)
-          .maybeSingle(),
-        profile!.block
-          ? supabase
-              .from("slots")
-              .select("*")
-              .eq("block", profile!.block)
-              .eq("is_open", true)
-              .gte("date", today)
-              .order("date")
-              .order("start_time")
-              .limit(30)
-          : Promise.resolve({ data: [] as Tables<"slots">[] }),
-        profile!.block
-          ? supabase
-              .from("notices")
-              .select("*")
-              .eq("is_active", true)
-              .or(`block.is.null,block.eq.${profile!.block}`)
-              .order("created_at", { ascending: false })
-              .limit(1)
-          : Promise.resolve({ data: [] as Tables<"notices">[] }),
-      ]);
-
-      if (cancelled) return;
-
-      setOrders(
-        ((ordersRes.data as OrderRow[] | null) ?? []).sort(
-          (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
-        ),
-      );
-      setUnreadCount(unreadRes.count ?? 0);
-      setPlanRow((planRes.data as PlanRow | null) ?? null);
-
-      const openSlot = (slotRes.data ?? []).find((s) => s.booked_count < s.capacity);
-      setNextSlot(openSlot ?? null);
-
-      const foundNotice = (noticeRes.data ?? [])[0] ?? null;
-      setNotice(foundNotice);
-      try {
-        if (foundNotice && localStorage.getItem(NOTICE_DISMISS_KEY) === foundNotice.id) {
-          setNoticeDismissed(true);
-        }
-      } catch {
-        // localStorage unavailable — just show the notice
+    if (ordersRes.error) {
+      const cached = loadCache<OrderRow[]>(ORDERS_CACHE_KEY);
+      if (cached) {
+        setOrders(cached.data);
+        setShowingCached(true);
+      } else {
+        setError(true);
       }
-
-      setLoading(false);
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    const sortedOrders = ((ordersRes.data as OrderRow[] | null) ?? []).sort(
+      (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
+    );
+    setOrders(sortedOrders);
+    setShowingCached(false);
+    saveCache(ORDERS_CACHE_KEY, sortedOrders);
+
+    setUnreadCount(unreadRes.count ?? 0);
+    setPlanRow((planRes.data as PlanRow | null) ?? null);
+
+    const openSlot = (slotRes.data ?? []).find((s) => s.booked_count < s.capacity);
+    setNextSlot(openSlot ?? null);
+
+    const foundNotice = (noticeRes.data ?? [])[0] ?? null;
+    setNotice(foundNotice);
+    try {
+      if (foundNotice && localStorage.getItem(NOTICE_DISMISS_KEY) === foundNotice.id) {
+        setNoticeDismissed(true);
+      }
+    } catch {
+      // localStorage unavailable — just show the notice
+    }
   }, [user, profile]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    await fetchHome();
+    setLoading(false);
+  }, [fetchHome]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRegisterRefresh(fetchHome);
 
   const upcoming = useMemo<UpcomingRow[]>(() => {
     if (!orders) return [];
@@ -187,14 +207,30 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-6 w-6 rounded-full" />
+        </div>
+        <Skeleton className="h-[140px] w-full rounded-card" />
+        <Skeleton className="h-[52px] w-full rounded-control" />
+        <Skeleton className="h-[68px] w-full rounded-card" />
       </div>
     );
   }
 
+  if (error) {
+    return <InlineError message="Couldn't load your home screen." onRetry={load} />;
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {showingCached && (
+        <p className="-mb-2 text-center text-xs text-muted">
+          Showing your last saved status.
+        </p>
+      )}
+
       {notice && !noticeDismissed && (
         <div className="-mx-screen -mt-screen flex items-start gap-3 border-b-2 border-warning bg-warning/15 px-screen py-3">
           <p className="flex-1 text-sm text-ink">{notice.message}</p>
@@ -215,13 +251,13 @@ export function Home() {
         </h1>
         <button
           type="button"
-          aria-label="Notifications"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
           onClick={() => navigate("/notifications")}
-          className="relative"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-primary-soft"
         >
           <Bell size={22} className="text-ink" />
           {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
+            <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -346,7 +382,11 @@ export function Home() {
         </div>
       )}
 
-      <button type="button" className="text-center text-sm text-muted underline">
+      <button
+        type="button"
+        onClick={() => navigate("/help")}
+        className="min-h-11 text-center text-sm text-muted underline"
+      >
         Report a problem
       </button>
     </div>

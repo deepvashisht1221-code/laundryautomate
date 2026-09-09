@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Star } from "lucide-react";
+import { Search, Star, PackageSearch } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { nextMilestoneText, relevantAt } from "@/lib/format";
 import { OrderStubCard } from "@/components/OrderStubCard";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
+import { EmptyState } from "@/components/EmptyState";
+import { saveCache, loadCache } from "@/lib/offlineCache";
+import { useRegisterRefresh } from "@/lib/refresh-context";
 import { cn } from "@/lib/utils";
+
+const ACTIVE_CACHE_KEY = "orders.active";
 
 type ActiveOrderRow = Tables<"orders"> & {
   service_types: { name: string } | null;
@@ -69,34 +76,71 @@ export function Orders() {
   const [tab, setTab] = useState<"active" | "history">("active");
 
   const [activeOrders, setActiveOrders] = useState<ActiveOrderRow[] | null>(null);
+  const [activeError, setActiveError] = useState(false);
+  const [showingCached, setShowingCached] = useState(false);
   const [historyOrders, setHistoryOrders] = useState<HistoryOrderRow[] | null>(null);
+  const [historyError, setHistoryError] = useState(false);
 
   const [serviceFilter, setServiceFilter] = useState<(typeof SERVICE_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  const loadActive = useCallback(async () => {
     if (!user) return;
-    supabase
+    setActiveError(false);
+    const { data, error } = await supabase
       .from("orders")
       .select("*, service_types(name), slots(date, start_time, end_time)")
       .eq("user_id", user.id)
-      .not("status", "in", "(delivered,cancelled)")
-      .then(({ data }) => {
-        const rows = (data as ActiveOrderRow[] | null) ?? [];
-        setActiveOrders(rows.sort((a, b) => relevantAt(a).getTime() - relevantAt(b).getTime()));
-      });
+      .not("status", "in", "(delivered,cancelled)");
+
+    if (error) {
+      const cached = loadCache<ActiveOrderRow[]>(ACTIVE_CACHE_KEY);
+      if (cached) {
+        setActiveOrders(cached.data);
+        setShowingCached(true);
+      } else {
+        setActiveError(true);
+      }
+      return;
+    }
+    const rows = ((data as ActiveOrderRow[] | null) ?? []).sort(
+      (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
+    );
+    setActiveOrders(rows);
+    setShowingCached(false);
+    saveCache(ACTIVE_CACHE_KEY, rows);
   }, [user]);
 
-  useEffect(() => {
+  const loadHistory = useCallback(async () => {
     if (!user) return;
-    supabase
+    setHistoryError(false);
+    const { data, error } = await supabase
       .from("orders")
       .select("*, service_types(name)")
       .eq("user_id", user.id)
       .in("status", ["delivered", "cancelled"])
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setHistoryOrders((data as HistoryOrderRow[] | null) ?? []));
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setHistoryError(true);
+      return;
+    }
+    setHistoryOrders((data as HistoryOrderRow[] | null) ?? []);
   }, [user]);
+
+  useEffect(() => {
+    loadActive();
+  }, [loadActive]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  useRegisterRefresh(
+    useCallback(async () => {
+      await Promise.all([loadActive(), loadHistory()]);
+    }, [loadActive, loadHistory]),
+  );
 
   const filteredHistory = useMemo(() => {
     if (!historyOrders) return [];
@@ -130,7 +174,7 @@ export function Orders() {
             type="button"
             onClick={() => setTab(t)}
             className={cn(
-              "flex-1 rounded-control py-2 text-sm font-semibold capitalize transition-colors",
+              "min-h-11 flex-1 rounded-control text-sm font-semibold capitalize transition-colors",
               tab === t ? "bg-card text-ink shadow-sm" : "text-muted",
             )}
           >
@@ -139,33 +183,51 @@ export function Orders() {
         ))}
       </div>
 
-      {tab === "active" &&
-        (activeOrders === null ? (
-          <p className="text-sm text-muted">Loading…</p>
-        ) : activeOrders.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-card border border-line bg-card p-6 text-center">
-            <p className="text-base text-ink">Nothing in the wash right now</p>
-            <Link
-              to="/schedule"
-              className="flex h-[48px] w-full items-center justify-center rounded-control bg-primary text-sm font-semibold text-primary-foreground"
-            >
-              Schedule a pickup
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {activeOrders.map((order) => (
-              <OrderStubCard
-                key={order.id}
-                orderId={order.id}
-                orderCode={order.order_code}
-                serviceName={order.service_types?.name ?? "Order"}
-                status={order.status}
-                milestone={nextMilestoneText(order)}
-              />
-            ))}
-          </div>
-        ))}
+      {tab === "active" && (
+        <>
+          {showingCached && (
+            <p className="text-center text-xs text-muted">Showing your last saved status.</p>
+          )}
+          {activeOrders === null && !activeError ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          ) : activeError ? (
+            <InlineError message="Couldn't load your orders." onRetry={loadActive} />
+          ) : activeOrders!.length === 0 ? (
+            <EmptyState
+              icon={
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
+                  <PackageSearch size={22} />
+                </span>
+              }
+              title="Nothing in the wash right now"
+              action={
+                <Link
+                  to="/schedule"
+                  className="flex h-11 w-full items-center justify-center rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+                >
+                  Schedule a pickup
+                </Link>
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {activeOrders!.map((order) => (
+                <OrderStubCard
+                  key={order.id}
+                  orderId={order.id}
+                  orderCode={order.order_code}
+                  serviceName={order.service_types?.name ?? "Order"}
+                  status={order.status}
+                  milestone={nextMilestoneText(order)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       {tab === "history" && (
         <div className="flex flex-col gap-4">
@@ -176,7 +238,7 @@ export function Orders() {
                 type="button"
                 onClick={() => setServiceFilter(f)}
                 className={cn(
-                  "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium",
+                  "flex min-h-11 shrink-0 items-center rounded-full border px-3.5 text-sm font-medium",
                   serviceFilter === f
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-line bg-card text-ink",
@@ -187,24 +249,41 @@ export function Orders() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 rounded-control border border-line bg-card px-3 py-2">
+          <div className="flex min-h-11 items-center gap-2 rounded-control border border-line bg-card px-3 py-2">
             <Search size={16} className="text-muted" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by order code"
+              aria-label="Search order history by code"
               className="w-full bg-transparent text-sm text-ink focus:outline-none"
             />
           </div>
 
-          {historyOrders === null ? (
-            <p className="text-sm text-muted">Loading…</p>
+          {historyOrders === null && !historyError ? (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
+          ) : historyError ? (
+            <InlineError message="Couldn't load your order history." onRetry={loadHistory} />
           ) : filteredHistory.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted">
-              {historyOrders.length === 0
-                ? "Your finished orders will show up here."
-                : "No orders match your filters."}
-            </p>
+            historyOrders!.length === 0 ? (
+              <EmptyState
+                title="Your finished orders will show up here."
+                action={
+                  <Link
+                    to="/schedule"
+                    className="flex h-11 w-full items-center justify-center rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+                  >
+                    Schedule your first pickup
+                  </Link>
+                }
+              />
+            ) : (
+              <p className="py-8 text-center text-sm text-muted">No orders match your filters.</p>
+            )
           ) : (
             <div className="flex flex-col">
               {groupedHistory.map(([month, rows]) => (
@@ -264,7 +343,7 @@ export function Orders() {
             <button
               type="button"
               onClick={() => downloadCsv(filteredHistory)}
-              className="pb-2 text-center text-sm text-muted underline"
+              className="min-h-11 pb-2 text-center text-sm text-muted underline"
             >
               Download statement
             </button>

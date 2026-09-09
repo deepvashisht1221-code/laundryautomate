@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -17,6 +17,8 @@ import {
 } from "@/lib/format";
 import { ITEM_CATEGORIES } from "@/lib/estimate";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
 
 type OrderDetailRow = Tables<"orders"> & {
   service_types: Tables<"service_types"> | null;
@@ -77,6 +79,7 @@ export function OrderDetail() {
   const [events, setEvents] = useState<Tables<"order_events">[]>([]);
   const [issue, setIssue] = useState<Tables<"issues"> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lineFilled, setLineFilled] = useState(false);
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -87,47 +90,50 @@ export function OrderDetail() {
   const [ratingComment, setRatingComment] = useState("");
   const [submittingRating, setSubmittingRating] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id || !user) return;
-    let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
 
-    async function load() {
-      const [orderRes, eventsRes, issueRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select(
-            "*, service_types(*), slots(date, start_time, end_time, block), partner:profiles!orders_partner_id_fkey(id, full_name, avatar_url, phone)",
-          )
-          .eq("id", id!)
-          .eq("user_id", user!.id)
-          .maybeSingle(),
-        supabase
-          .from("order_events")
-          .select("*")
-          .eq("order_id", id!)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("issues")
-          .select("*")
-          .eq("order_id", id!)
-          .neq("status", "resolved")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
+    const [orderRes, eventsRes, issueRes] = await Promise.all([
+      supabase
+        .from("orders")
+        .select(
+          "*, service_types(*), slots(date, start_time, end_time, block), partner:profiles!orders_partner_id_fkey(id, full_name, avatar_url, phone)",
+        )
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("order_events")
+        .select("*")
+        .eq("order_id", id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("issues")
+        .select("*")
+        .eq("order_id", id)
+        .neq("status", "resolved")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-      if (cancelled) return;
-      setOrder((orderRes.data as OrderDetailRow | null) ?? null);
-      setEvents(eventsRes.data ?? []);
-      setIssue(issueRes.data ?? null);
+    if (orderRes.error || eventsRes.error || issueRes.error) {
+      setLoadError(true);
       setLoading(false);
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    setOrder((orderRes.data as OrderDetailRow | null) ?? null);
+    setEvents(eventsRes.data ?? []);
+    setIssue(issueRes.data ?? null);
+    setLoading(false);
   }, [id, user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setLineFilled(true));
@@ -177,8 +183,18 @@ export function OrderDetail() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+      <div className="flex flex-1 flex-col gap-4 px-screen py-4">
+        <Skeleton className="h-7 w-32" />
+        <Skeleton className="h-[220px] w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-screen">
+        <InlineError message="Couldn't load this order." onRetry={load} />
       </div>
     );
   }
@@ -190,7 +206,7 @@ export function OrderDetail() {
         <button
           type="button"
           onClick={() => navigate("/orders")}
-          className="text-sm text-primary underline"
+          className="min-h-11 text-sm text-primary underline"
         >
           Back to orders
         </button>
@@ -272,7 +288,7 @@ export function OrderDetail() {
           type="button"
           onClick={() => navigate("/orders")}
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-primary-soft"
         >
           <ChevronLeft size={22} />
         </button>
@@ -487,7 +503,7 @@ export function OrderDetail() {
             <div className="flex gap-2">
               <a
                 href={`tel:${order.partner.phone ?? ""}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary"
                 aria-label="Call partner"
               >
                 <Phone size={16} />
@@ -496,7 +512,7 @@ export function OrderDetail() {
                 href={`https://wa.me/${(order.partner.phone ?? "").replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary"
                 aria-label="WhatsApp partner"
               >
                 <MessageCircle size={16} />
@@ -533,6 +549,7 @@ export function OrderDetail() {
                   type="button"
                   onClick={() => setRatingValue(n)}
                   aria-label={`${n} star${n > 1 ? "s" : ""}`}
+                  className="flex h-11 w-11 items-center justify-center"
                 >
                   <Star
                     size={24}
@@ -568,7 +585,7 @@ export function OrderDetail() {
               state: { backgroundLocation: location },
             })
           }
-          className="mt-6 w-full pb-2 text-center text-sm text-muted underline"
+          className="mt-6 min-h-11 w-full pb-2 text-center text-sm text-muted underline"
         >
           Report a problem
         </button>

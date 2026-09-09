@@ -101,7 +101,7 @@ export function Onboarding() {
           disabled={step === 1}
           aria-label="Back"
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full",
+            "flex h-11 w-11 items-center justify-center rounded-full",
             step === 1 ? "invisible" : "text-ink hover:bg-primary-soft",
           )}
         >

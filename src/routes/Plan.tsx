@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
+import { InlineError } from "@/components/InlineError";
 
 type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
 type QuotaOrder = Pick<Tables<"orders">, "id" | "order_code" | "weight_kg" | "created_at">;
@@ -78,53 +80,57 @@ export function Plan() {
   const [services, setServices] = useState<Tables<"service_types">[] | null>(null);
   const [quotaOrders, setQuotaOrders] = useState<QuotaOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [confirmTarget, setConfirmTarget] = useState<Tables<"plans"> | "payg" | null>(null);
   const [switching, setSwitching] = useState(false);
   const [switchDone, setSwitchDone] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!user) return;
-    let cancelled = false;
+    setLoading(true);
+    setError(false);
 
-    async function load() {
-      const [planRes, allPlansRes, servicesRes] = await Promise.all([
-        supabase
-          .from("user_plans")
-          .select("*, plans(*)")
-          .eq("user_id", user!.id)
-          .eq("is_active", true)
-          .maybeSingle(),
-        supabase.from("plans").select("*").order("price"),
-        supabase.from("service_types").select("*").eq("is_active", true).order("price"),
-      ]);
+    const [planRes, allPlansRes, servicesRes] = await Promise.all([
+      supabase
+        .from("user_plans")
+        .select("*, plans(*)")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle(),
+      supabase.from("plans").select("*").order("price"),
+      supabase.from("service_types").select("*").eq("is_active", true).order("price"),
+    ]);
 
-      if (cancelled) return;
-      const activePlan = (planRes.data as PlanRow | null) ?? null;
-      setPlanRow(activePlan);
-      setAllPlans(allPlansRes.data ?? []);
-      setServices(servicesRes.data ?? []);
-
-      if (activePlan) {
-        const periodStart = computePeriodStart(activePlan.starts_on);
-        const { data: orders } = await supabase
-          .from("orders")
-          .select("id, order_code, weight_kg, created_at")
-          .eq("user_id", user!.id)
-          .eq("payment_status", "covered_by_plan")
-          .gte("created_at", periodStart.toISOString())
-          .order("created_at", { ascending: false });
-        if (!cancelled) setQuotaOrders(orders ?? []);
-      }
-
+    if (planRes.error || allPlansRes.error || servicesRes.error) {
+      setError(true);
       setLoading(false);
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    const activePlan = (planRes.data as PlanRow | null) ?? null;
+    setPlanRow(activePlan);
+    setAllPlans(allPlansRes.data ?? []);
+    setServices(servicesRes.data ?? []);
+
+    if (activePlan) {
+      const periodStart = computePeriodStart(activePlan.starts_on);
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, order_code, weight_kg, created_at")
+        .eq("user_id", user.id)
+        .eq("payment_status", "covered_by_plan")
+        .gte("created_at", periodStart.toISOString())
+        .order("created_at", { ascending: false });
+      setQuotaOrders(orders ?? []);
+    }
+
+    setLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function handleConfirmSwitch() {
     if (!user || !confirmTarget) return;
@@ -162,10 +168,17 @@ export function Plan() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted">Loading…</p>
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-7 w-24" />
+        <Skeleton className="h-[180px] w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-24 w-full rounded-card" />
       </div>
     );
+  }
+
+  if (error) {
+    return <InlineError message="Couldn't load your plan." onRetry={load} />;
   }
 
   const quotaRemaining = planRow
@@ -325,7 +338,7 @@ export function Plan() {
                   <button
                     type="button"
                     onClick={() => setConfirmTarget(plan)}
-                    className="h-10 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
+                    className="h-11 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
                   >
                     {planRow ? "Switch to this" : "Choose plan"}
                   </button>
@@ -352,7 +365,7 @@ export function Plan() {
               <button
                 type="button"
                 onClick={() => setConfirmTarget("payg")}
-                className="h-10 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
+                className="h-11 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
               >
                 Switch to this
               </button>
