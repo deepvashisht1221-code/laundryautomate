@@ -50,8 +50,6 @@ body {
 
 @media (min-width: 481px) {
   body {
-    display: flex;
-    justify-content: center;
     padding: 32px 16px;
   }
 
