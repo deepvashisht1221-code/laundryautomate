@@ -570,8 +570,10 @@ export function Schedule() {
             <div className="flex flex-col gap-2">
               {dayFull ? (
                 <p className="text-sm text-muted">
-                  No slots left on this day.
-                  {nextAvailableDay ? ` Try ${format(nextAvailableDay, "EEEE")}.` : ""}
+                  {allSlots.length === 0
+                    ? "Your laundry partner hasn't added any pickup slots for your village yet. Check back soon."
+                    : "No slots left on this day." +
+                      (nextAvailableDay ? ` Try ${format(nextAvailableDay, "EEEE")}.` : "")}
                 </p>
               ) : (
                 daySlots.map((slot) => {
