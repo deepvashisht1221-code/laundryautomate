@@ -405,36 +405,50 @@ export type Database = {
       }
       slots: {
         Row: {
-          block: string
+          block: string | null
           booked_count: number
           capacity: number
           date: string
           end_time: string
           id: string
           is_open: boolean
+          partner_id: string | null
           start_time: string
+          village: string | null
         }
         Insert: {
-          block: string
+          block?: string | null
           booked_count?: number
           capacity?: number
           date: string
           end_time: string
           id?: string
           is_open?: boolean
+          partner_id?: string | null
           start_time: string
+          village?: string | null
         }
         Update: {
-          block?: string
+          block?: string | null
           booked_count?: number
           capacity?: number
           date?: string
           end_time?: string
           id?: string
           is_open?: boolean
+          partner_id?: string | null
           start_time?: string
+          village?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "slots_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_plans: {
         Row: {

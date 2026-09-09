@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
 
 type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
+type SlotWithPartner = Tables<"slots"> & { partner: { full_name: string | null } | null };
 
 function buildNext7Days(): Date[] {
   const today = new Date();
@@ -237,7 +238,7 @@ export function Schedule() {
 
   const [weekDates] = useState(buildNext7Days);
   const [selectedDate, setSelectedDate] = useState(weekDates[0]);
-  const [allSlots, setAllSlots] = useState<Tables<"slots">[]>([]);
+  const [allSlots, setAllSlots] = useState<SlotWithPartner[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
@@ -279,21 +280,22 @@ export function Schedule() {
   }, [user]);
 
   useEffect(() => {
-    if (!profile?.block) return;
+    if (!profile?.village) return;
     const start = format(weekDates[0], "yyyy-MM-dd");
     const end = format(weekDates[weekDates.length - 1], "yyyy-MM-dd");
     supabase
       .from("slots")
-      .select("*")
-      .eq("block", profile.block)
+      .select("*, partner:profiles!slots_partner_id_fkey(full_name)")
+      .eq("village", profile.village)
+      .not("partner_id", "is", null)
       .eq("is_open", true)
       .gte("date", start)
       .lte("date", end)
       .order("date")
       .order("start_time")
-      .then(({ data }) => setAllSlots(data ?? []));
+      .then(({ data }) => setAllSlots((data as SlotWithPartner[] | null) ?? []));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.block]);
+  }, [profile?.village]);
 
   const selectedDateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -366,6 +368,7 @@ export function Schedule() {
       .from("orders")
       .insert({
         user_id: user.id,
+        partner_id: selectedSlot.partner_id,
         service_type_id: selectedService.id,
         pickup_slot_id: selectedSlotId,
         pickup_at: pickupAt.toISOString(),
@@ -590,8 +593,13 @@ export function Schedule() {
                             : "border-line bg-card",
                       )}
                     >
-                      <span className="text-sm font-medium text-ink">
-                        {formatSlotWindow(slot.start_time, slot.end_time)}
+                      <span>
+                        <span className="block text-sm font-medium text-ink">
+                          {formatSlotWindow(slot.start_time, slot.end_time)}
+                        </span>
+                        <span className="text-xs text-muted">
+                          {slot.partner?.full_name ?? "Partner"}
+                        </span>
                       </span>
                       <span className="text-sm text-muted">
                         {full ? "Full" : `${remaining} spot${remaining === 1 ? "" : "s"} left`}
@@ -646,6 +654,11 @@ export function Schedule() {
                     Pickup {formatDayLabel(selectedDate)}
                     {selectedSlot ? `, ${formatSlotWindow(selectedSlot.start_time, selectedSlot.end_time)}` : ""}
                   </p>
+                  {selectedSlot?.partner?.full_name && (
+                    <p className="text-sm text-muted">
+                      Collected by {selectedSlot.partner.full_name}
+                    </p>
+                  )}
                   {selectedService && (
                     <p className="text-sm text-muted">
                       Estimated delivery{" "}

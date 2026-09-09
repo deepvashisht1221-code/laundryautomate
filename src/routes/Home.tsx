@@ -83,11 +83,12 @@ export function Home() {
         .eq("user_id", user.id)
         .eq("is_active", true)
         .maybeSingle(),
-      profile.block
+      profile.village
         ? supabase
             .from("slots")
             .select("*")
-            .eq("block", profile.block)
+            .eq("village", profile.village)
+            .not("partner_id", "is", null)
             .eq("is_open", true)
             .gte("date", today)
             .order("date")

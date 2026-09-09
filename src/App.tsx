@@ -1,10 +1,14 @@
 import { Navigate, Route, Routes, useLocation, type Location } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
+import { RequirePartnerAuth } from "@/components/RequirePartnerAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { ThemeEffect } from "@/components/ThemeEffect";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { Login } from "@/routes/Login";
+import { PartnerLogin } from "@/routes/PartnerLogin";
+import { PartnerDashboard } from "@/routes/PartnerDashboard";
+import { PartnerChangePassword } from "@/routes/PartnerChangePassword";
 import { Onboarding } from "@/routes/Onboarding";
 import { Schedule } from "@/routes/Schedule";
 import { OrderDetail } from "@/routes/OrderDetail";
@@ -29,6 +33,23 @@ export function App() {
         <OfflineBanner />
         <Routes location={backgroundLocation ?? location}>
           <Route path="/login" element={<Login />} />
+          <Route path="/partner/login" element={<PartnerLogin />} />
+          <Route
+            path="/partner"
+            element={
+              <RequirePartnerAuth>
+                <PartnerDashboard />
+              </RequirePartnerAuth>
+            }
+          />
+          <Route
+            path="/partner/change-password"
+            element={
+              <RequirePartnerAuth>
+                <PartnerChangePassword />
+              </RequirePartnerAuth>
+            }
+          />
           <Route
             path="/onboarding"
             element={
