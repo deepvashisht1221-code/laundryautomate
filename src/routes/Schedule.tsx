@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables, Enums } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { formatDayLabel, formatSlotWindow } from "@/lib/format";
+import { formatDayLabel, formatSlotTime } from "@/lib/format";
 import { ITEM_CATEGORIES, estimatePrice, type ItemCounts } from "@/lib/estimate";
 import { VILLAGE_BLOCKS, FLOORS, PICKUP_POINTS, pickupPointLabel } from "@/lib/locations";
 import { Skeleton } from "@/components/Skeleton";
@@ -395,7 +395,7 @@ export function Schedule() {
 
     setSubmitted({
       orderCode: data.order_code,
-      windowLabel: `${formatDayLabel(selectedDate)}, ${formatSlotWindow(selectedSlot.start_time, selectedSlot.end_time)}`,
+      windowLabel: `${formatDayLabel(selectedDate)}, ${formatSlotTime(selectedSlot.start_time)}`,
     });
   }
 
@@ -595,7 +595,7 @@ export function Schedule() {
                     >
                       <span>
                         <span className="block text-sm font-medium text-ink">
-                          {formatSlotWindow(slot.start_time, slot.end_time)}
+                          {formatSlotTime(slot.start_time)}
                         </span>
                         <span className="text-xs text-muted">
                           {slot.partner?.full_name ?? "Partner"}
@@ -652,7 +652,7 @@ export function Schedule() {
                   <p className="text-base font-semibold text-ink">{selectedService?.name}</p>
                   <p className="text-sm text-ink">
                     Pickup {formatDayLabel(selectedDate)}
-                    {selectedSlot ? `, ${formatSlotWindow(selectedSlot.start_time, selectedSlot.end_time)}` : ""}
+                    {selectedSlot ? `, ${formatSlotTime(selectedSlot.start_time)}` : ""}
                   </p>
                   {selectedSlot?.partner?.full_name && (
                     <p className="text-sm text-muted">

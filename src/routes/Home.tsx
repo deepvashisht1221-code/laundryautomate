@@ -7,7 +7,7 @@ import type { Tables } from "@/types/database";
 import {
   formatClock,
   formatDayLabel,
-  formatSlotWindow,
+  formatSlotTime,
   nextMilestoneText,
   relevantAt,
 } from "@/lib/format";
@@ -164,9 +164,7 @@ export function Home() {
           key: `${order.id}-pickup`,
           date,
           kind: "pickup",
-          timeLabel: order.slots
-            ? formatSlotWindow(order.slots.start_time, order.slots.end_time)
-            : formatClock(date),
+          timeLabel: order.slots ? formatSlotTime(order.slots.start_time) : formatClock(date),
           scheduled: true,
           orderCode: order.order_code,
         });
@@ -306,7 +304,7 @@ export function Home() {
             {nextSlot ? (
               <>
                 Your next free slot is {formatDayLabel(new Date(nextSlot.date))},{" "}
-                {formatSlotWindow(nextSlot.start_time, nextSlot.end_time)}.
+                {formatSlotTime(nextSlot.start_time)}.
               </>
             ) : (
               "Check back soon for an open slot."

@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { VILLAGE_BLOCKS } from "@/lib/locations";
-import { formatDayLabel, formatSlotWindow } from "@/lib/format";
+import { formatDayLabel, formatSlotTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
@@ -17,6 +17,8 @@ type SlotRow = Tables<"slots">;
 type RosterOrder = Pick<Tables<"orders">, "id" | "order_code" | "bag_count"> & {
   profiles: Pick<Tables<"profiles">, "full_name" | "block" | "room_number" | "phone"> | null;
 };
+
+const DEFAULT_CAPACITY = 20;
 
 function todayStr() {
   return format(new Date(), "yyyy-MM-dd");
@@ -98,13 +100,15 @@ export function PartnerDashboard() {
   const [error, setError] = useState(false);
   const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
 
-  const [village, setVillage] = useState("");
+  const [villages, setVillages] = useState<string[]>([]);
   const [date, setDate] = useState(todayStr());
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("11:00");
-  const [capacity, setCapacity] = useState(20);
+  const [pickupTime, setPickupTime] = useState("09:00");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  function toggleVillage(v: string) {
+    setVillages((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  }
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -134,28 +138,27 @@ export function PartnerDashboard() {
 
   async function handleCreateSlot(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !village) return;
-    if (endTime <= startTime) {
-      setCreateError("End time must be after start time.");
-      return;
-    }
+    if (!user || villages.length === 0) return;
     setCreating(true);
     setCreateError(null);
 
-    const { error: insertError } = await supabase.from("slots").insert({
-      partner_id: user.id,
-      village,
-      date,
-      start_time: `${startTime}:00`,
-      end_time: `${endTime}:00`,
-      capacity,
-    });
+    const { error: insertError } = await supabase.from("slots").insert(
+      villages.map((village) => ({
+        partner_id: user.id,
+        village,
+        date,
+        start_time: `${pickupTime}:00`,
+        end_time: `${pickupTime}:00`,
+        capacity: DEFAULT_CAPACITY,
+      })),
+    );
 
     setCreating(false);
     if (insertError) {
       setCreateError("Couldn't add this slot. Please try again.");
       return;
     }
+    setVillages([]);
     await load();
   }
 
@@ -193,22 +196,32 @@ export function PartnerDashboard() {
         >
           <h2 className="text-sm font-semibold text-ink">Add a pickup slot</h2>
 
-          <label className="block">
-            <span className="text-sm text-ink">Student Village</span>
-            <select
-              value={village}
-              onChange={(e) => setVillage(e.target.value)}
-              required
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
-            >
-              <option value="">Select village</option>
-              {Object.keys(VILLAGE_BLOCKS).map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div>
+            <span className="text-sm text-ink">Student Villages</span>
+            <div className="mt-2 flex flex-col gap-2">
+              {Object.keys(VILLAGE_BLOCKS).map((v) => {
+                const checked = villages.includes(v);
+                return (
+                  <label
+                    key={v}
+                    className={cn(
+                      "flex min-h-11 items-center gap-3 rounded-control border px-3 py-2",
+                      checked ? "border-primary bg-primary-soft" : "border-line bg-card",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleVillage(v)}
+                      style={{ accentColor: "var(--primary)" }}
+                      className="h-5 w-5"
+                    />
+                    <span className="text-sm text-ink">{v}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           <label className="block">
             <span className="text-sm text-ink">Date</span>
@@ -222,37 +235,13 @@ export function PartnerDashboard() {
             />
           </label>
 
-          <div className="flex gap-3">
-            <label className="block flex-1">
-              <span className="text-sm text-ink">Start time</span>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                required
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
-              />
-            </label>
-            <label className="block flex-1">
-              <span className="text-sm text-ink">End time</span>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                required
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
-              />
-            </label>
-          </div>
-
           <label className="block">
-            <span className="text-sm text-ink">Capacity (bags)</span>
+            <span className="text-sm text-ink">Pickup time</span>
             <input
-              type="number"
-              min={1}
-              max={200}
-              value={capacity}
-              onChange={(e) => setCapacity(Math.max(1, Number(e.target.value) || 1))}
+              type="time"
+              value={pickupTime}
+              onChange={(e) => setPickupTime(e.target.value)}
+              required
               className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
@@ -261,11 +250,15 @@ export function PartnerDashboard() {
 
           <button
             type="submit"
-            disabled={creating || !village}
+            disabled={creating || villages.length === 0}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-control bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
             <Plus size={16} />
-            {creating ? "Adding…" : "Add slot"}
+            {creating
+              ? "Adding…"
+              : villages.length > 1
+                ? `Add slot to ${villages.length} villages`
+                : "Add slot"}
           </button>
         </form>
 
@@ -298,8 +291,7 @@ export function PartnerDashboard() {
                   >
                     <div>
                       <p className="text-sm font-medium text-ink">
-                        {formatDayLabel(new Date(slot.date))},{" "}
-                        {formatSlotWindow(slot.start_time, slot.end_time)}
+                        {formatDayLabel(new Date(slot.date))}, {formatSlotTime(slot.start_time)}
                       </p>
                       <p className="mt-0.5 text-xs text-muted">{slot.village}</p>
                     </div>

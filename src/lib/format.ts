@@ -42,6 +42,11 @@ export function formatSlotWindow(start: string, end: string) {
   return `${s.label} ${s.period}–${e.label} ${e.period}`;
 }
 
+export function formatSlotTime(start: string) {
+  const s = formatTimeStr(start);
+  return `${s.label} ${s.period}`;
+}
+
 type OrderStatus = Enums<"order_status_type">;
 
 export const STATUS_META: Record<OrderStatus, { label: string; dot: string }> = {
@@ -102,7 +107,7 @@ export function nextMilestoneText(order: MilestoneOrder) {
   switch (order.status) {
     case "scheduled":
       if (order.slots) {
-        return `Pickup ${formatDayLabel(new Date(order.slots.date))}, ${formatSlotWindow(order.slots.start_time, order.slots.end_time)}`;
+        return `Pickup ${formatDayLabel(new Date(order.slots.date))}, ${formatSlotTime(order.slots.start_time)}`;
       }
       return order.pickup_at
         ? `Pickup ${formatDayLabel(new Date(order.pickup_at))}`
