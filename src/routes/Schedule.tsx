@@ -239,6 +239,8 @@ export function Schedule() {
   const [weekDates] = useState(buildNext7Days);
   const [selectedDate, setSelectedDate] = useState(weekDates[0]);
   const [allSlots, setAllSlots] = useState<SlotWithPartner[]>([]);
+  const [slotsLoaded, setSlotsLoaded] = useState(false);
+  const [slotsError, setSlotsError] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
@@ -279,8 +281,9 @@ export function Schedule() {
       .then(({ data }) => setPlanRow((data as PlanRow | null) ?? null));
   }, [user]);
 
-  useEffect(() => {
+  const loadSlots = useCallback(() => {
     if (!profile?.village) return;
+    setSlotsError(false);
     const start = format(weekDates[0], "yyyy-MM-dd");
     const end = format(weekDates[weekDates.length - 1], "yyyy-MM-dd");
     supabase
@@ -293,9 +296,21 @@ export function Schedule() {
       .lte("date", end)
       .order("date")
       .order("start_time")
-      .then(({ data }) => setAllSlots((data as SlotWithPartner[] | null) ?? []));
+      .then(({ data, error }) => {
+        if (error) {
+          setSlotsError(true);
+          setSlotsLoaded(true);
+          return;
+        }
+        setAllSlots((data as SlotWithPartner[] | null) ?? []);
+        setSlotsLoaded(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.village]);
+
+  useEffect(() => {
+    loadSlots();
+  }, [loadSlots]);
 
   const selectedDateKey = format(selectedDate, "yyyy-MM-dd");
 
@@ -425,6 +440,42 @@ export function Schedule() {
             Back to home
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (profile?.village && !slotsLoaded) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 px-screen py-6">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-20 w-full rounded-card" />
+        <Skeleton className="h-20 w-full rounded-card" />
+      </div>
+    );
+  }
+
+  if (profile?.village && slotsError) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-screen">
+        <InlineError message="Couldn't check available pickup slots." onRetry={loadSlots} />
+      </div>
+    );
+  }
+
+  if (profile?.village && slotsLoaded && allSlots.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-screen text-center">
+        <p className="text-base text-ink">
+          Your laundry partner hasn&apos;t added any pickup slots for your village yet.
+        </p>
+        <p className="text-sm text-muted">Check back soon, or ask your block rep.</p>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="mt-3 h-11 rounded-control border border-line px-6 text-sm font-semibold text-ink"
+        >
+          Back to home
+        </button>
       </div>
     );
   }
@@ -570,10 +621,8 @@ export function Schedule() {
             <div className="flex flex-col gap-2">
               {dayFull ? (
                 <p className="text-sm text-muted">
-                  {allSlots.length === 0
-                    ? "Your laundry partner hasn't added any pickup slots for your village yet. Check back soon."
-                    : "No slots left on this day." +
-                      (nextAvailableDay ? ` Try ${format(nextAvailableDay, "EEEE")}.` : "")}
+                  No slots left on this day.
+                  {nextAvailableDay ? ` Try ${format(nextAvailableDay, "EEEE")}.` : ""}
                 </p>
               ) : (
                 daySlots.map((slot) => {
