@@ -1,6 +1,12 @@
 import { isToday, isTomorrow, format } from "date-fns";
 import type { Enums } from "@/types/database";
 
+export function initials(name: string | null) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+}
+
 export const ISSUE_TYPE_LABEL: Record<Enums<"issue_type_type">, string> = {
   missing_item: "Missing item",
   damaged: "Damaged",

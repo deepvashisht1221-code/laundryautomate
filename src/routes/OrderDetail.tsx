@@ -12,6 +12,7 @@ import {
   buildTimeline,
   mainStatusIndex,
   ISSUE_TYPE_LABEL,
+  initials,
   type TimelineStep,
 } from "@/lib/format";
 import { ITEM_CATEGORIES } from "@/lib/estimate";
@@ -35,12 +36,6 @@ const PAYMENT_LABEL: Record<Enums<"payment_status_type">, string> = {
   paid: "Paid",
   covered_by_plan: "Covered by plan",
 };
-
-function initials(name: string | null) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
-}
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (

@@ -11,6 +11,8 @@ import { Home } from "@/routes/Home";
 import { Orders } from "@/routes/Orders";
 import { Plan } from "@/routes/Plan";
 import { Profile } from "@/routes/Profile";
+import { ProfileEdit } from "@/routes/ProfileEdit";
+import { Notifications } from "@/routes/Notifications";
 
 export function App() {
   const location = useLocation();
@@ -43,6 +45,22 @@ export function App() {
             element={
               <RequireAuth>
                 <OrderDetail />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <RequireAuth>
+                <Notifications />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <RequireAuth>
+                <ProfileEdit />
               </RequireAuth>
             }
           />

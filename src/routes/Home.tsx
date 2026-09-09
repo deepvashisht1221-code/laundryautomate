@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, Package, Truck, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -41,6 +41,7 @@ type UpcomingRow = {
 
 export function Home() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -212,7 +213,12 @@ export function Home() {
         <h1 className="font-display text-xl font-bold text-ink">
           {getGreeting()}, {firstName}
         </h1>
-        <button type="button" aria-label="Notifications" className="relative">
+        <button
+          type="button"
+          aria-label="Notifications"
+          onClick={() => navigate("/notifications")}
+          className="relative"
+        >
           <Bell size={22} className="text-ink" />
           {unreadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">

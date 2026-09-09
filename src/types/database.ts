@@ -292,10 +292,15 @@ export type Database = {
           avatar_url: string | null
           block: string | null
           created_at: string
+          default_service_type_id: string | null
           email: string | null
           floor: string | null
           full_name: string | null
           id: string
+          notify_delivery_alerts: boolean
+          notify_offers: boolean
+          notify_pickup_reminders: boolean
+          notify_status_updates: boolean
           onboarding_complete: boolean
           partner_notes: string | null
           phone: string | null
@@ -303,6 +308,7 @@ export type Database = {
           role: Database["public"]["Enums"]["profile_role_type"]
           room_number: string | null
           student_id: string | null
+          theme_preference: string
           village: string | null
           whatsapp_same_as_phone: boolean
         }
@@ -310,10 +316,15 @@ export type Database = {
           avatar_url?: string | null
           block?: string | null
           created_at?: string
+          default_service_type_id?: string | null
           email?: string | null
           floor?: string | null
           full_name?: string | null
           id: string
+          notify_delivery_alerts?: boolean
+          notify_offers?: boolean
+          notify_pickup_reminders?: boolean
+          notify_status_updates?: boolean
           onboarding_complete?: boolean
           partner_notes?: string | null
           phone?: string | null
@@ -321,6 +332,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["profile_role_type"]
           room_number?: string | null
           student_id?: string | null
+          theme_preference?: string
           village?: string | null
           whatsapp_same_as_phone?: boolean
         }
@@ -328,10 +340,15 @@ export type Database = {
           avatar_url?: string | null
           block?: string | null
           created_at?: string
+          default_service_type_id?: string | null
           email?: string | null
           floor?: string | null
           full_name?: string | null
           id?: string
+          notify_delivery_alerts?: boolean
+          notify_offers?: boolean
+          notify_pickup_reminders?: boolean
+          notify_status_updates?: boolean
           onboarding_complete?: boolean
           partner_notes?: string | null
           phone?: string | null
@@ -339,10 +356,19 @@ export type Database = {
           role?: Database["public"]["Enums"]["profile_role_type"]
           room_number?: string | null
           student_id?: string | null
+          theme_preference?: string
           village?: string | null
           whatsapp_same_as_phone?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_default_service_type_id_fkey"
+            columns: ["default_service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_types: {
         Row: {
