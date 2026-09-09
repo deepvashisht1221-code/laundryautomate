@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, type Location } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -6,16 +6,21 @@ import { Login } from "@/routes/Login";
 import { Onboarding } from "@/routes/Onboarding";
 import { Schedule } from "@/routes/Schedule";
 import { OrderDetail } from "@/routes/OrderDetail";
+import { ReportIssue } from "@/routes/ReportIssue";
 import { Home } from "@/routes/Home";
 import { Orders } from "@/routes/Orders";
 import { Plan } from "@/routes/Plan";
 import { Profile } from "@/routes/Profile";
 
 export function App() {
+  const location = useLocation();
+  const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)
+    ?.backgroundLocation;
+
   return (
     <AuthProvider>
       <div className="app-shell">
-        <Routes>
+        <Routes location={backgroundLocation ?? location}>
           <Route path="/login" element={<Login />} />
           <Route
             path="/onboarding"
@@ -55,6 +60,19 @@ export function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        {backgroundLocation && (
+          <Routes>
+            <Route
+              path="/orders/:id/issue"
+              element={
+                <RequireAuth>
+                  <ReportIssue />
+                </RequireAuth>
+              }
+            />
+          </Routes>
+        )}
       </div>
     </AuthProvider>
   );

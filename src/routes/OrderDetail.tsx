@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Check, Phone, MessageCircle, Star } from "lucide-react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,7 @@ import {
   MAIN_STEPS,
   buildTimeline,
   mainStatusIndex,
+  ISSUE_TYPE_LABEL,
   type TimelineStep,
 } from "@/lib/format";
 import { ITEM_CATEGORIES } from "@/lib/estimate";
@@ -75,9 +76,11 @@ export function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [order, setOrder] = useState<OrderDetailRow | null>(null);
   const [events, setEvents] = useState<Tables<"order_events">[]>([]);
+  const [issue, setIssue] = useState<Tables<"issues"> | null>(null);
   const [loading, setLoading] = useState(true);
   const [lineFilled, setLineFilled] = useState(false);
 
@@ -94,7 +97,7 @@ export function OrderDetail() {
     let cancelled = false;
 
     async function load() {
-      const [orderRes, eventsRes] = await Promise.all([
+      const [orderRes, eventsRes, issueRes] = await Promise.all([
         supabase
           .from("orders")
           .select(
@@ -108,11 +111,20 @@ export function OrderDetail() {
           .select("*")
           .eq("order_id", id!)
           .order("created_at", { ascending: true }),
+        supabase
+          .from("issues")
+          .select("*")
+          .eq("order_id", id!)
+          .neq("status", "resolved")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
       if (cancelled) return;
       setOrder((orderRes.data as OrderDetailRow | null) ?? null);
       setEvents(eventsRes.data ?? []);
+      setIssue(issueRes.data ?? null);
       setLoading(false);
     }
 
@@ -215,6 +227,11 @@ export function OrderDetail() {
   const hasMismatch =
     hasVerified &&
     ITEM_CATEGORIES.some((c) => (declared[c.key] ?? 0) !== (verified![c.key] ?? 0));
+  const mismatchNote = hasVerified
+    ? ITEM_CATEGORIES.filter((c) => (declared[c.key] ?? 0) !== (verified![c.key] ?? 0))
+        .map((c) => `${c.label}: declared ${declared[c.key] ?? 0}, received ${verified![c.key] ?? 0}.`)
+        .join(" ")
+    : "";
 
   return (
     <div className="relative flex flex-1 flex-col">
@@ -281,6 +298,21 @@ export function OrderDetail() {
           </span>
         </div>
         <p className="mt-0.5 text-sm text-muted">{order.service_types?.name ?? "Order"}</p>
+
+        {issue && (
+          <div className="mt-4 flex items-start gap-3 rounded-card border border-warning bg-warning/15 p-3.5">
+            <AlertTriangle size={18} className="mt-0.5 shrink-0 text-warning" />
+            <div>
+              <p className="text-sm font-medium text-ink">
+                {ISSUE_TYPE_LABEL[issue.type]} ·{" "}
+                {issue.status === "open" ? "Reported" : "Under review"}
+              </p>
+              <p className="mt-0.5 text-sm text-muted">
+                {issue.description ?? "We'll update you here as we look into it."}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="relative mt-6">
           <div className="absolute left-4 top-2 bottom-2 w-0.5 -translate-x-1/2 bg-line" />
@@ -398,6 +430,15 @@ export function OrderDetail() {
             {hasMismatch && (
               <button
                 type="button"
+                onClick={() =>
+                  navigate(`/orders/${order.id}/issue`, {
+                    state: {
+                      backgroundLocation: location,
+                      issueType: "missing_item",
+                      note: mismatchNote,
+                    },
+                  })
+                }
                 className="mt-3 h-11 w-full rounded-control border border-warning text-sm font-semibold text-warning"
               >
                 Something&apos;s missing
@@ -527,6 +568,11 @@ export function OrderDetail() {
 
         <button
           type="button"
+          onClick={() =>
+            navigate(`/orders/${order.id}/issue`, {
+              state: { backgroundLocation: location },
+            })
+          }
           className="mt-6 w-full pb-2 text-center text-sm text-muted underline"
         >
           Report a problem

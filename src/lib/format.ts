@@ -1,6 +1,14 @@
 import { isToday, isTomorrow, format } from "date-fns";
 import type { Enums } from "@/types/database";
 
+export const ISSUE_TYPE_LABEL: Record<Enums<"issue_type_type">, string> = {
+  missing_item: "Missing item",
+  damaged: "Damaged",
+  wrong_items: "Wrong items returned",
+  late: "Late delivery",
+  other: "Something else",
+};
+
 export function formatDayLabel(date: Date) {
   if (isToday(date)) return "today";
   if (isTomorrow(date)) return "tomorrow";
