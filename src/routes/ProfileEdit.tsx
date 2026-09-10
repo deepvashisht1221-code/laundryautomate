@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { VILLAGE_BLOCKS, FLOORS, PICKUP_POINTS } from "@/lib/locations";
 import { TextField, SelectField } from "@/components/FormField";
 
-const STUDENT_ID_RE = /^\d{2}[A-Z]{2}\d{4}$/;
+const STUDENT_ID_RE = /^\d{8}$/;
 const NOTES_MAX = 200;
 
 type FormState = {
@@ -132,14 +132,16 @@ export function ProfileEdit() {
                 <TextField
                   label="Student ID"
                   value={form.studentId}
-                  onChange={(e) => set("studentId", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    set("studentId", e.target.value.replace(/\D/g, "").slice(0, 8))
+                  }
                   onBlur={() => markTouched("studentId")}
-                  placeholder="23PG1234"
-                  autoCapitalize="characters"
+                  placeholder="12345678"
+                  inputMode="numeric"
                 />
                 {touched.studentId && !studentIdValid && (
                   <p className="mt-1 text-sm text-danger">
-                    Enter your student ID like 23PG1234 (2 digits, 2 letters, 4 digits).
+                    Enter your 8-digit student ID (numbers only).
                   </p>
                 )}
               </div>
