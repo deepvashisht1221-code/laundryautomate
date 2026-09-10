@@ -345,6 +345,10 @@ export function Profile() {
           <span className="text-ink">Help &amp; support</span>
           <ChevronRight size={16} className="text-muted" />
         </Link>
+        <Link to="/terms" className="flex min-h-11 items-center justify-between text-sm">
+          <span className="text-ink">Terms &amp; conditions</span>
+          <ChevronRight size={16} className="text-muted" />
+        </Link>
         <div className="flex min-h-11 items-center justify-between text-sm">
           <span className="flex items-center gap-2 text-ink">
             <CreditCard size={16} className="text-muted" />

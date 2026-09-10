@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { GoogleMark } from "@/components/GoogleMark";
 
@@ -96,13 +96,13 @@ export function Login() {
           </button>
 
           <p className="text-center text-xs text-muted">
-            <a href="/terms" className="underline">
+            <Link to="/terms" className="underline">
               Terms
-            </a>
+            </Link>
             <span className="mx-2">·</span>
-            <a href="/privacy" className="underline">
+            <Link to="/privacy" className="underline">
               Privacy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

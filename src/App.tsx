@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { ThemeEffect } from "@/components/ThemeEffect";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { Login } from "@/routes/Login";
+import { Terms } from "@/routes/Terms";
 import { PartnerLogin } from "@/routes/PartnerLogin";
 import { PartnerDashboard } from "@/routes/PartnerDashboard";
 import { PartnerChangePassword } from "@/routes/PartnerChangePassword";
@@ -33,6 +34,8 @@ export function App() {
         <OfflineBanner />
         <Routes location={backgroundLocation ?? location}>
           <Route path="/login" element={<Login />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Terms />} />
           <Route path="/partner/login" element={<PartnerLogin />} />
           <Route
             path="/partner"
