@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +37,7 @@ export function Onboarding() {
   );
 
   const [notes, setNotes] = useState(profile?.partner_notes ?? "");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const fullName = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? "";
   const email = user?.email ?? "";
@@ -312,6 +313,23 @@ export function Onboarding() {
               </p>
             </div>
 
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                style={{ accentColor: "var(--primary)" }}
+                className="mt-0.5 h-5 w-5 shrink-0"
+              />
+              <span className="text-sm text-ink">
+                I agree to the{" "}
+                <Link to="/terms" className="text-primary underline">
+                  Terms &amp; Conditions
+                </Link>
+                .
+              </span>
+            </label>
+
             {error && <p className="text-sm text-danger">{error}</p>}
           </div>
         )}
@@ -330,21 +348,21 @@ export function Onboarding() {
           <>
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || !agreedToTerms}
               onClick={() => {
                 void finish(notes.trim() || null);
               }}
-              className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-70"
+              className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-50"
             >
               {saving ? "Setting up your account…" : "Finish setup"}
             </button>
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || !agreedToTerms}
               onClick={() => {
                 void finish(null);
               }}
-              className="text-center text-sm text-muted underline"
+              className="min-h-11 text-center text-sm text-muted underline disabled:opacity-50"
             >
               Skip for now
             </button>
