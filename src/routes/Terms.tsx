@@ -31,6 +31,16 @@ export function Terms() {
       <div className="flex-1 overflow-y-auto px-screen py-5">
         <p className="text-xs text-muted">Last updated September 2026</p>
 
+        <div className="mt-4 rounded-card border border-warning bg-warning/15 p-4">
+          <p className="text-sm font-semibold text-ink">This is a student project.</p>
+          <p className="mt-1 text-sm leading-6 text-ink">
+            DhobISB is built and run by a student, for the convenience of fellow residents in the
+            ISB student villages. It is not an official ISB service, not affiliated with or
+            endorsed by ISB, and not a company. It comes with no formal guarantees — it&apos;s
+            offered purely as a convenience, nothing else.
+          </p>
+        </div>
+
         <div className="mt-5 flex flex-col gap-6">
           <Section title="Who this is for">
             <p>
@@ -44,6 +54,15 @@ export function Terms() {
               this app is intended solely for current ISB residents. Creating or using an account
               if you&apos;re not an ISB resident isn&apos;t permitted, and we may suspend or remove
               accounts that don&apos;t belong to the community this app serves.
+            </p>
+          </Section>
+
+          <Section title="No warranty">
+            <p>
+              This is a student-run convenience tool, not a commercial or professionally audited
+              service. It&apos;s provided &ldquo;as is,&rdquo; with no guarantee that it will be
+              available, error-free, or uninterrupted. Use it at your convenience, not as a
+              service you formally depend on.
             </p>
           </Section>
 
