@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-
-const DESK_PHONE = "+91 98765 43210";
-const DESK_EMAIL = "help@dhobisb.app";
+import { DESK_PHONE, DESK_EMAIL } from "@/lib/contact";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

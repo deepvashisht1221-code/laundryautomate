@@ -5,12 +5,11 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { DESK_PHONE, DESK_EMAIL } from "@/lib/contact";
 import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
 import { EmptyState } from "@/components/EmptyState";
 
-const DESK_PHONE = "+91 98765 43210";
-const DESK_EMAIL = "help@dhobisb.app";
 const DESK_HOURS = "Mon–Sat, 8am–8pm";
 
 const FAQS: { question: string; answer: string }[] = [
