@@ -242,6 +242,7 @@ export function Schedule() {
   const [slotsLoaded, setSlotsLoaded] = useState(false);
   const [slotsError, setSlotsError] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
 
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
   const [planRow, setPlanRow] = useState<PlanRow | null>(null);
@@ -318,9 +319,25 @@ export function Schedule() {
     setSelectedSlotId(null);
   }, [selectedDateKey]);
 
+  const partners = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of allSlots) {
+      if (s.partner_id) map.set(s.partner_id, s.partner?.full_name ?? "Partner");
+    }
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [allSlots]);
+
+  const partnerSlots = useMemo(
+    () =>
+      selectedPartnerId
+        ? allSlots.filter((s) => s.partner_id === selectedPartnerId)
+        : allSlots,
+    [allSlots, selectedPartnerId],
+  );
+
   const daySlots = useMemo(
-    () => allSlots.filter((s) => s.date === selectedDateKey),
-    [allSlots, selectedDateKey],
+    () => partnerSlots.filter((s) => s.date === selectedDateKey),
+    [partnerSlots, selectedDateKey],
   );
   const dayFull = daySlots.length === 0 || daySlots.every((s) => s.booked_count >= s.capacity);
 
@@ -329,12 +346,12 @@ export function Schedule() {
     for (const date of weekDates) {
       const key = format(date, "yyyy-MM-dd");
       if (key <= selectedDateKey) continue;
-      const hasOpen = allSlots.some((s) => s.date === key && s.booked_count < s.capacity);
+      const hasOpen = partnerSlots.some((s) => s.date === key && s.booked_count < s.capacity);
       if (hasOpen) return date;
     }
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allSlots, selectedDateKey, dayFull]);
+  }, [partnerSlots, selectedDateKey, dayFull]);
 
   const selectedSlot = allSlots.find((s) => s.id === selectedSlotId) ?? null;
   const selectedService = services?.find((s) => s.id === selectedServiceId) ?? null;
@@ -362,11 +379,17 @@ export function Schedule() {
   }
 
   function goNext() {
-    setStep((s) => Math.min(4, s + 1));
+    setStep((s) => Math.min(5, s + 1));
   }
 
   const canProceed =
-    step === 1 ? Boolean(selectedServiceId) : step === 3 ? Boolean(selectedSlotId) : true;
+    step === 1
+      ? Boolean(selectedPartnerId)
+      : step === 2
+        ? Boolean(selectedServiceId)
+        : step === 4
+          ? Boolean(selectedSlotId)
+          : true;
 
   async function handleConfirm() {
     if (!user || !selectedService || !selectedSlotId || !selectedSlot) return;
@@ -502,11 +525,42 @@ export function Schedule() {
         >
           <ChevronLeft size={22} />
         </button>
-        <span className="text-sm text-muted">Step {step} of 4</span>
+        <span className="text-sm text-muted">Step {step} of 5</span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-screen py-6 pb-28">
         {step === 1 && (
+          <div className="flex flex-col gap-3">
+            <h1 className="font-display text-xl font-bold text-ink">Choose a laundry partner</h1>
+            {partners.length === 0 ? (
+              <p className="text-sm text-muted">No laundry partners available right now.</p>
+            ) : (
+              partners.map((p) => {
+                const selected = p.id === selectedPartnerId;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedPartnerId(p.id)}
+                    className={cn(
+                      "flex items-center justify-between gap-3 rounded-card border p-4 text-left",
+                      selected ? "border-primary bg-primary-soft" : "border-line bg-card",
+                    )}
+                  >
+                    <p className="text-base font-semibold text-ink">{p.name}</p>
+                    {selected && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                        <Check size={14} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {step === 2 && (
           <div className="flex flex-col gap-3">
             <h1 className="font-display text-xl font-bold text-ink">Choose a service</h1>
             {servicesError ? (
@@ -552,7 +606,7 @@ export function Schedule() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="flex flex-col gap-6">
             <h1 className="font-display text-xl font-bold text-ink">What&apos;s in the bag?</h1>
 
@@ -591,7 +645,7 @@ export function Schedule() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="flex flex-col gap-4">
             <h1 className="font-display text-xl font-bold text-ink">Pick a pickup slot</h1>
 
@@ -677,7 +731,7 @@ export function Schedule() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="flex flex-col gap-6">
             <h1 className="font-display text-xl font-bold text-ink">Confirm your pickup</h1>
 
@@ -766,7 +820,7 @@ export function Schedule() {
               ? "Covered by your plan"
               : `~₹${estimate?.amount ?? 0} estimated`}
         </div>
-        {step < 4 ? (
+        {step < 5 ? (
           <button
             type="button"
             onClick={goNext}
