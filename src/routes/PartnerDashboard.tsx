@@ -4,7 +4,7 @@ import { Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import type { Tables } from "@/types/database";
+import type { Enums, Tables } from "@/types/database";
 import { VILLAGE_BLOCKS } from "@/lib/locations";
 import { formatDayLabel, formatSlotTime, PAYMENT_STATUS_META } from "@/lib/format";
 import { uploadOrderPhoto } from "@/lib/uploadPhoto";
@@ -37,6 +37,16 @@ function todayStr() {
 
 const ROSTER_ORDER_COLUMNS =
   "id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone)";
+
+type PaymentFilter = "all" | Enums<"payment_status_type">;
+
+const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "unpaid", label: "Unpaid" },
+  { value: "submitted", label: "Submitted" },
+  { value: "rejected", label: "Rejected" },
+  { value: "paid", label: "Paid" },
+];
 
 function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
@@ -319,9 +329,37 @@ export function PartnerDashboard() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
+  const [paymentOrders, setPaymentOrders] = useState<RosterOrder[] | null>(null);
+  const [paymentOrdersError, setPaymentOrdersError] = useState(false);
+
   function toggleVillage(v: string) {
     setVillages((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
   }
+
+  const loadPaymentOrders = useCallback(async () => {
+    if (!user) return;
+    setPaymentOrdersError(false);
+    let query = supabase
+      .from("orders")
+      .select(ROSTER_ORDER_COLUMNS)
+      .eq("partner_id", user.id)
+      .eq("status", "delivered")
+      .order("delivered_at", { ascending: false });
+    if (paymentFilter !== "all") {
+      query = query.eq("payment_status", paymentFilter);
+    }
+    const { data, error: fetchError } = await query;
+    if (fetchError) {
+      setPaymentOrdersError(true);
+      return;
+    }
+    setPaymentOrders((data as unknown as RosterOrder[]) ?? []);
+  }, [user, paymentFilter]);
+
+  useEffect(() => {
+    loadPaymentOrders();
+  }, [loadPaymentOrders]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -529,6 +567,45 @@ export function PartnerDashboard() {
             })}
           </div>
         )}
+
+        <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Payments</h2>
+
+        <div className="no-scrollbar -mx-screen flex gap-2 overflow-x-auto px-screen">
+          {PAYMENT_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setPaymentFilter(f.value)}
+              className={cn(
+                "flex min-h-11 shrink-0 items-center rounded-full border px-3.5 text-sm font-medium",
+                paymentFilter === f.value
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-line bg-card text-ink",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3">
+          {paymentOrdersError ? (
+            <InlineError message="Couldn't load payments." onRetry={loadPaymentOrders} />
+          ) : paymentOrders === null ? (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : paymentOrders.length === 0 ? (
+            <EmptyState title="No orders match this filter." />
+          ) : (
+            <div className="flex flex-col divide-y divide-line rounded-card bg-card shadow-elevation-1 px-4">
+              {paymentOrders.map((o) => (
+                <RosterOrderCard key={o.id} order={o} onChanged={loadPaymentOrders} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
