@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, CreditCard, Download, LogOut, Trash2 } from "lucide-react";
+import { ChevronRight, CreditCard, Download, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables, TablesUpdate } from "@/types/database";
@@ -79,9 +79,6 @@ export function Profile() {
   const navigate = useNavigate();
 
   const [services, setServices] = useState<ServiceType[]>([]);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteText, setDeleteText] = useState("");
-  const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
@@ -99,14 +96,6 @@ export function Profile() {
   }
 
   async function handleSignOut() {
-    await signOut();
-    navigate("/login", { replace: true });
-  }
-
-  async function handleDeleteAccount() {
-    if (!user || deleteText.trim().toLowerCase() !== "delete") return;
-    setDeleting(true);
-    await supabase.from("profiles").delete().eq("id", user.id);
     await signOut();
     navigate("/login", { replace: true });
   }
@@ -174,54 +163,6 @@ export function Profile() {
 
   return (
     <div className="flex flex-col gap-4 pb-8">
-      {deleteOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-screen"
-          onClick={() => !deleting && setDeleteOpen(false)}
-        >
-          <div
-            className="w-full max-w-[420px] rounded-card bg-card p-5 shadow-float"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-ink">Delete your account?</h2>
-            <p className="mt-2 text-sm text-muted">
-              This permanently removes your profile, order history, and preferences. This
-              can&apos;t be undone.
-            </p>
-            <p className="mt-3 text-sm text-ink">
-              Type <span className="font-semibold">delete</span> to confirm.
-            </p>
-            <input
-              value={deleteText}
-              onChange={(e) => setDeleteText(e.target.value)}
-              className="mt-2 w-full rounded-t-control border-0 border-b-2 border-danger bg-surface-variant px-3 py-2.5 text-base text-ink focus:outline-none"
-              placeholder="delete"
-              autoCapitalize="none"
-            />
-            <div className="mt-5 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  void handleDeleteAccount();
-                }}
-                disabled={deleteText.trim().toLowerCase() !== "delete" || deleting}
-                className="h-11 w-full rounded-full bg-danger text-sm font-semibold text-white shadow-elevation-1 disabled:opacity-50"
-              >
-                {deleting ? "Deleting…" : "Delete my account"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(false)}
-                disabled={deleting}
-                className="h-11 w-full rounded-full border border-line text-sm font-semibold text-ink"
-              >
-                Keep my account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center gap-4">
         {profile.avatar_url ? (
           <img src={profile.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
@@ -376,14 +317,6 @@ export function Profile() {
         >
           <LogOut size={16} className="text-muted" />
           Sign out
-        </button>
-        <button
-          type="button"
-          onClick={() => setDeleteOpen(true)}
-          className="flex min-h-11 items-center gap-2 text-sm text-danger"
-        >
-          <Trash2 size={16} />
-          Delete account
         </button>
       </Section>
     </div>

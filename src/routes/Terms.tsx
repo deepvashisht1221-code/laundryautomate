@@ -114,10 +114,7 @@ export function Terms() {
           <Section title="Your choices">
             <p>
               From your Profile, you can update your address and contact details, turn
-              notification types on or off, download a copy of your data, or delete your account
-              entirely. Deleting your account removes your profile and order history from our
-              systems. Some minimal records may be kept where needed for security or dispute
-              resolution.
+              notification types on or off, and download a copy of your data at any time.
             </p>
           </Section>
 
