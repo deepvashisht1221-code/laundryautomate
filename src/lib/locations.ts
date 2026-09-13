@@ -1,6 +1,6 @@
 import type { Enums } from "@/types/database";
 
-const BLOCKS_A_TO_J = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+export const BLOCKS_A_TO_J = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 
 export const VILLAGE_BLOCKS: Record<string, string[]> = {
   "Student Village 1": BLOCKS_A_TO_J,

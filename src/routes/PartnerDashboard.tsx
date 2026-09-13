@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Enums, Tables } from "@/types/database";
-import { VILLAGE_BLOCKS } from "@/lib/locations";
+import { VILLAGE_BLOCKS, BLOCKS_A_TO_J } from "@/lib/locations";
 import { formatDayLabel, formatSlotTime, PAYMENT_STATUS_META } from "@/lib/format";
 import { uploadOrderPhoto } from "@/lib/uploadPhoto";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ type RosterOrder = Pick<
   | "dropoff_photo_url"
   | "payment_photo_url"
 > & {
-  profiles: Pick<Tables<"profiles">, "full_name" | "block" | "room_number" | "phone"> | null;
+  profiles: Pick<Tables<"profiles">, "full_name" | "block" | "room_number" | "phone" | "village"> | null;
 };
 
 const UNLIMITED_CAPACITY = 999999;
@@ -36,7 +36,7 @@ function todayStr() {
 }
 
 const ROSTER_ORDER_COLUMNS =
-  "id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone)";
+  "id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone, village)";
 
 type PaymentFilter = "all" | Enums<"payment_status_type">;
 
@@ -330,36 +330,43 @@ export function PartnerDashboard() {
   const [createError, setCreateError] = useState<string | null>(null);
 
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
-  const [paymentOrders, setPaymentOrders] = useState<RosterOrder[] | null>(null);
-  const [paymentOrdersError, setPaymentOrdersError] = useState(false);
+  const [villageFilter, setVillageFilter] = useState("all");
+  const [blockFilter, setBlockFilter] = useState("all");
+  const [browseOrders, setBrowseOrders] = useState<RosterOrder[] | null>(null);
+  const [browseOrdersError, setBrowseOrdersError] = useState(false);
 
   function toggleVillage(v: string) {
     setVillages((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
   }
 
-  const loadPaymentOrders = useCallback(async () => {
+  const loadBrowseOrders = useCallback(async () => {
     if (!user) return;
-    setPaymentOrdersError(false);
-    let query = supabase
+    setBrowseOrdersError(false);
+    const { data, error: fetchError } = await supabase
       .from("orders")
       .select(ROSTER_ORDER_COLUMNS)
       .eq("partner_id", user.id)
-      .eq("status", "delivered")
-      .order("delivered_at", { ascending: false });
-    if (paymentFilter !== "all") {
-      query = query.eq("payment_status", paymentFilter);
-    }
-    const { data, error: fetchError } = await query;
+      .order("created_at", { ascending: false });
     if (fetchError) {
-      setPaymentOrdersError(true);
+      setBrowseOrdersError(true);
       return;
     }
-    setPaymentOrders((data as unknown as RosterOrder[]) ?? []);
-  }, [user, paymentFilter]);
+    setBrowseOrders((data as unknown as RosterOrder[]) ?? []);
+  }, [user]);
 
   useEffect(() => {
-    loadPaymentOrders();
-  }, [loadPaymentOrders]);
+    loadBrowseOrders();
+  }, [loadBrowseOrders]);
+
+  const filteredOrders = useMemo(() => {
+    if (!browseOrders) return null;
+    return browseOrders.filter((o) => {
+      if (paymentFilter !== "all" && o.payment_status !== paymentFilter) return false;
+      if (villageFilter !== "all" && o.profiles?.village !== villageFilter) return false;
+      if (blockFilter !== "all" && o.profiles?.block !== blockFilter) return false;
+      return true;
+    });
+  }, [browseOrders, paymentFilter, villageFilter, blockFilter]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -568,9 +575,45 @@ export function PartnerDashboard() {
           </div>
         )}
 
-        <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Payments</h2>
+        <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Orders</h2>
 
-        <div className="no-scrollbar -mx-screen flex gap-2 overflow-x-auto px-screen">
+        <div className="flex gap-2">
+          <label className="flex-1">
+            <span className="sr-only">Village</span>
+            <select
+              value={villageFilter}
+              onChange={(e) => {
+                setVillageFilter(e.target.value);
+                setBlockFilter("all");
+              }}
+              className="w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-sm text-ink focus:border-primary focus:outline-none"
+            >
+              <option value="all">All villages</option>
+              {Object.keys(VILLAGE_BLOCKS).map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex-1">
+            <span className="sr-only">Block</span>
+            <select
+              value={blockFilter}
+              onChange={(e) => setBlockFilter(e.target.value)}
+              className="w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-sm text-ink focus:border-primary focus:outline-none"
+            >
+              <option value="all">All blocks</option>
+              {BLOCKS_A_TO_J.map((b) => (
+                <option key={b} value={b}>
+                  Block {b}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="no-scrollbar -mx-screen mt-3 flex gap-2 overflow-x-auto px-screen">
           {PAYMENT_FILTERS.map((f) => (
             <button
               key={f.value}
@@ -589,19 +632,19 @@ export function PartnerDashboard() {
         </div>
 
         <div className="mt-3">
-          {paymentOrdersError ? (
-            <InlineError message="Couldn't load payments." onRetry={loadPaymentOrders} />
-          ) : paymentOrders === null ? (
+          {browseOrdersError ? (
+            <InlineError message="Couldn't load orders." onRetry={loadBrowseOrders} />
+          ) : filteredOrders === null ? (
             <div className="flex flex-col gap-2">
               <Skeleton className="h-16 w-full" />
               <Skeleton className="h-16 w-full" />
             </div>
-          ) : paymentOrders.length === 0 ? (
+          ) : filteredOrders.length === 0 ? (
             <EmptyState title="No orders match this filter." />
           ) : (
             <div className="flex flex-col divide-y divide-line rounded-card bg-card shadow-elevation-1 px-4">
-              {paymentOrders.map((o) => (
-                <RosterOrderCard key={o.id} order={o} onChanged={loadPaymentOrders} />
+              {filteredOrders.map((o) => (
+                <RosterOrderCard key={o.id} order={o} onChanged={loadBrowseOrders} />
               ))}
             </div>
           )}
