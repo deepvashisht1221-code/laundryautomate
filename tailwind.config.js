@@ -53,9 +53,9 @@ export default {
       },
       boxShadow: {
         float: "0 8px 24px -8px rgb(16 38 44 / 0.18)",
-        "elevation-1": "0 1px 2px rgb(16 38 44 / 0.12), 0 1px 3px 1px rgb(16 38 44 / 0.08)",
-        "elevation-2": "0 1px 2px rgb(16 38 44 / 0.14), 0 2px 6px 2px rgb(16 38 44 / 0.10)",
-        "elevation-3": "0 1px 3px rgb(16 38 44 / 0.16), 0 4px 8px 3px rgb(16 38 44 / 0.10)",
+        "elevation-1": "0 1px 3px rgb(16 38 44 / 0.22), 0 4px 10px -2px rgb(16 38 44 / 0.20)",
+        "elevation-2": "0 2px 6px rgb(16 38 44 / 0.24), 0 8px 20px -4px rgb(16 38 44 / 0.22)",
+        "elevation-3": "0 4px 10px rgb(16 38 44 / 0.26), 0 12px 28px -6px rgb(16 38 44 / 0.24)",
       },
       maxWidth: {
         app: "480px",

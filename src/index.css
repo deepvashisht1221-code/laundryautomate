@@ -5,7 +5,7 @@
 :root {
   --ink: #10262c;
   --surface: #f2f6f5;
-  --surface-variant: #dfe9e8;
+  --surface-variant: #cee3e0;
   --card: #ffffff;
   --primary: #0e5c63;
   --primary-soft: #dcebea;
@@ -27,7 +27,7 @@
   :root:not([data-theme="light"]) {
     --ink: #eaf2f1;
     --surface: #0b1618;
-    --surface-variant: #1c3033;
+    --surface-variant: #24393c;
     --card: #132226;
     --primary: #4fd1c5;
     --primary-soft: #16333a;
@@ -45,7 +45,7 @@
 :root[data-theme="dark"] {
   --ink: #eaf2f1;
   --surface: #0b1618;
-  --surface-variant: #1c3033;
+  --surface-variant: #24393c;
   --card: #132226;
   --primary: #4fd1c5;
   --primary-soft: #16333a;
