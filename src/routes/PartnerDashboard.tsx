@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react";
+import { Bell, Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +18,7 @@ type SlotRow = Tables<"slots">;
 type RosterOrder = Pick<
   Tables<"orders">,
   | "id"
+  | "user_id"
   | "order_code"
   | "bag_count"
   | "status"
@@ -36,7 +37,7 @@ function todayStr() {
 }
 
 const ROSTER_ORDER_COLUMNS =
-  "id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone, village)";
+  "id, user_id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone, village)";
 
 type PaymentFilter = "all" | Enums<"payment_status_type">;
 
@@ -51,8 +52,26 @@ const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
 function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: () => void }) {
   const [busy, setBusy] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
+  const [reminderSent, setReminderSent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingKindRef = useRef<"pickup" | "dropoff" | null>(null);
+
+  async function sendPaymentReminder() {
+    setBusy(true);
+    setRowError(null);
+    const { error } = await supabase.from("notifications").insert({
+      user_id: order.user_id,
+      title: "Payment reminder",
+      body: `Your laundry partner is waiting for payment for order ${order.order_code}. Please upload your payment screenshot.`,
+      deep_link: `/orders/${order.id}`,
+    });
+    setBusy(false);
+    if (error) {
+      setRowError("Couldn't send reminder. Please try again.");
+      return;
+    }
+    setReminderSent(true);
+  }
 
   function pickPhotoFor(kind: "pickup" | "dropoff") {
     pendingKindRef.current = kind;
@@ -243,15 +262,30 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <span className={cn("h-2 w-2 rounded-full", PAYMENT_STATUS_META[order.payment_status].dot)} />
-              <p className="text-xs text-muted">
-                {order.payment_status === "paid"
-                  ? "Payment verified — booking complete"
-                  : order.payment_status === "rejected"
-                    ? "Waiting for student to re-upload payment"
-                    : "Waiting for student to submit payment"}
-              </p>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className={cn("h-2 w-2 rounded-full", PAYMENT_STATUS_META[order.payment_status].dot)} />
+                <p className="text-xs text-muted">
+                  {order.payment_status === "paid"
+                    ? "Payment verified — booking complete"
+                    : order.payment_status === "rejected"
+                      ? "Waiting for student to re-upload payment"
+                      : "Waiting for student to submit payment"}
+                </p>
+              </div>
+              {(order.payment_status === "unpaid" || order.payment_status === "rejected") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void sendPaymentReminder();
+                  }}
+                  disabled={busy || reminderSent}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary text-xs font-semibold text-primary disabled:opacity-60"
+                >
+                  <Bell size={13} />
+                  {reminderSent ? "Reminder sent" : "Send reminder"}
+                </button>
+              )}
             </div>
           )}
         </div>
