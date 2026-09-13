@@ -116,7 +116,7 @@ export function ReportIssue() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="mt-3 h-11 w-full rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+              className="mt-3 h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1"
             >
               Done
             </button>
@@ -160,7 +160,7 @@ export function ReportIssue() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Tell us what's wrong so we can help quickly."
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -208,7 +208,7 @@ export function ReportIssue() {
                 void handleSubmit();
               }}
               disabled={!issueType || submitting}
-              className="mt-5 h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-50"
+              className="mt-5 h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-50"
             >
               {submitting ? "Sending…" : "Send report"}
             </button>

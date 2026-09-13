@@ -212,7 +212,7 @@ export function Home() {
           <Skeleton className="h-6 w-6 rounded-full" />
         </div>
         <Skeleton className="h-[140px] w-full rounded-card" />
-        <Skeleton className="h-[52px] w-full rounded-control" />
+        <Skeleton className="h-[52px] w-full rounded-full" />
         <Skeleton className="h-[68px] w-full rounded-card" />
       </div>
     );
@@ -298,7 +298,7 @@ export function Home() {
           )}
         </div>
       ) : (
-        <div className="rounded-card border border-line bg-card p-5">
+        <div className="rounded-card bg-card shadow-elevation-1 p-5">
           <p className="text-base text-ink">
             Nothing in the wash.{" "}
             {nextSlot ? (
@@ -315,14 +315,14 @@ export function Home() {
 
       <Link
         to="/schedule"
-        className="flex h-[52px] w-full items-center justify-center rounded-control bg-primary text-base font-semibold text-primary-foreground"
+        className="flex h-[52px] w-full items-center justify-center rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1"
       >
         Schedule a pickup
       </Link>
 
       <Link
         to="/plan"
-        className="flex items-center justify-between rounded-card border border-line bg-card p-4"
+        className="flex items-center justify-between rounded-card bg-card shadow-elevation-1 p-4"
       >
         {planRow && planRow.plans.monthly_quota_kg != null ? (
           <div className="flex-1">

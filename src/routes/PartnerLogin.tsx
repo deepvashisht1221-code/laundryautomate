@@ -58,7 +58,7 @@ export function PartnerLogin() {
               onChange={(e) => setUsername(e.target.value)}
               autoCapitalize="none"
               autoCorrect="off"
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -68,7 +68,7 @@ export function PartnerLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -77,7 +77,7 @@ export function PartnerLogin() {
           <button
             type="submit"
             disabled={submitting || !username || !password}
-            className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-60"
+            className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-60"
           >
             {submitting ? "Signing in…" : "Sign in"}
           </button>

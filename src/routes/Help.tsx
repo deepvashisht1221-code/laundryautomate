@@ -134,7 +134,7 @@ export function Help() {
                     key={o.id}
                     type="button"
                     onClick={() => openIssueFor(o.id)}
-                    className="flex min-h-11 items-center justify-between rounded-card border border-line bg-card p-3.5 text-left"
+                    className="flex min-h-11 items-center justify-between rounded-card bg-card shadow-elevation-1 p-3.5 text-left"
                   >
                     <div>
                       <p className="text-sm font-medium text-ink">{o.order_code}</p>
@@ -161,7 +161,7 @@ export function Help() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-screen py-5">
-        <div className="flex items-center gap-2 rounded-control border border-line bg-card px-3 py-2.5">
+        <div className="flex items-center gap-2 rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5">
           <Search size={16} className="text-muted" />
           <input
             value={search}
@@ -172,7 +172,7 @@ export function Help() {
           />
         </div>
 
-        <div className="mt-4 flex flex-col divide-y divide-line rounded-card border border-line bg-card">
+        <div className="mt-4 flex flex-col divide-y divide-line rounded-card bg-card shadow-elevation-1">
           {filteredFaqs.length === 0 ? (
             <p className="p-4 text-sm text-muted">
               No answers matched &ldquo;{search}&rdquo;. Try the contact options below.
@@ -216,7 +216,7 @@ export function Help() {
               href={`https://wa.me/${DESK_PHONE.replace(/\D/g, "")}`}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-11 items-center gap-3 rounded-card border border-line bg-card p-3.5"
+              className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <MessageCircle size={16} />
@@ -229,7 +229,7 @@ export function Help() {
 
             <a
               href={`tel:${DESK_PHONE.replace(/\s/g, "")}`}
-              className="flex min-h-11 items-center gap-3 rounded-card border border-line bg-card p-3.5"
+              className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <Phone size={16} />
@@ -242,7 +242,7 @@ export function Help() {
 
             <a
               href={`mailto:${DESK_EMAIL}`}
-              className="flex min-h-11 items-center gap-3 rounded-card border border-line bg-card p-3.5"
+              className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <Mail size={16} />
@@ -258,7 +258,7 @@ export function Help() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-warning text-sm font-semibold text-warning"
+          className="mt-6 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-warning text-sm font-semibold text-warning"
         >
           <AlertTriangle size={16} />
           Report a problem with an order

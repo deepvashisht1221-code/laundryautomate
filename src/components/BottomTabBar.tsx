@@ -24,19 +24,26 @@ export function BottomTabBar() {
               aria-label={label}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-11 flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                  "flex min-h-11 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
                   isActive ? "text-primary" : "text-muted",
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon
-                    size={22}
-                    strokeWidth={isActive ? 2.25 : 1.75}
-                    fill={isActive ? "currentColor" : "none"}
-                    className={isActive ? "text-primary" : "text-muted"}
-                  />
+                  <span
+                    className={cn(
+                      "flex h-8 items-center justify-center rounded-full px-4 transition-colors",
+                      isActive && "bg-primary-soft",
+                    )}
+                  >
+                    <Icon
+                      size={22}
+                      strokeWidth={isActive ? 2.25 : 1.75}
+                      fill={isActive ? "currentColor" : "none"}
+                      className={isActive ? "text-primary" : "text-muted"}
+                    />
+                  </span>
                   <span>{label}</span>
                 </>
               )}

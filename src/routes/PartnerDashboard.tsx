@@ -192,7 +192,7 @@ export function PartnerDashboard() {
       <div className="flex-1 overflow-y-auto px-screen py-5">
         <form
           onSubmit={handleCreateSlot}
-          className="flex flex-col gap-4 rounded-card border border-line bg-card p-4"
+          className="flex flex-col gap-4 rounded-card bg-card shadow-elevation-1 p-4"
         >
           <h2 className="text-sm font-semibold text-ink">Add a pickup slot</h2>
 
@@ -205,7 +205,7 @@ export function PartnerDashboard() {
                   <label
                     key={v}
                     className={cn(
-                      "flex min-h-11 items-center gap-3 rounded-control border px-3 py-2",
+                      "flex min-h-11 items-center gap-3 rounded-card border px-3 py-2",
                       checked ? "border-primary bg-primary-soft" : "border-line bg-card",
                     )}
                   >
@@ -231,7 +231,7 @@ export function PartnerDashboard() {
               min={todayStr()}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -242,7 +242,7 @@ export function PartnerDashboard() {
               value={pickupTime}
               onChange={(e) => setPickupTime(e.target.value)}
               required
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -251,7 +251,7 @@ export function PartnerDashboard() {
           <button
             type="submit"
             disabled={creating || villages.length === 0}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-control bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-60"
           >
             <Plus size={16} />
             {creating
@@ -281,7 +281,7 @@ export function PartnerDashboard() {
               return (
                 <div
                   key={slot.id}
-                  className="overflow-hidden rounded-card border border-line bg-card"
+                  className="overflow-hidden rounded-card bg-card shadow-elevation-1"
                 >
                   <button
                     type="button"

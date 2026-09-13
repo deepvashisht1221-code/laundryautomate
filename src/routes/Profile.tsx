@@ -194,7 +194,7 @@ export function Profile() {
             <input
               value={deleteText}
               onChange={(e) => setDeleteText(e.target.value)}
-              className="mt-2 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-danger focus:outline-none"
+              className="mt-2 w-full rounded-t-control border-0 border-b-2 border-danger bg-surface-variant px-3 py-2.5 text-base text-ink focus:outline-none"
               placeholder="delete"
               autoCapitalize="none"
             />
@@ -205,7 +205,7 @@ export function Profile() {
                   void handleDeleteAccount();
                 }}
                 disabled={deleteText.trim().toLowerCase() !== "delete" || deleting}
-                className="h-11 w-full rounded-control bg-danger text-sm font-semibold text-white disabled:opacity-50"
+                className="h-11 w-full rounded-full bg-danger text-sm font-semibold text-white shadow-elevation-1 disabled:opacity-50"
               >
                 {deleting ? "Deleting…" : "Delete my account"}
               </button>
@@ -213,7 +213,7 @@ export function Profile() {
                 type="button"
                 onClick={() => setDeleteOpen(false)}
                 disabled={deleting}
-                className="h-11 w-full rounded-control border border-line text-sm font-semibold text-ink"
+                className="h-11 w-full rounded-full border border-line text-sm font-semibold text-ink"
               >
                 Keep my account
               </button>
@@ -278,7 +278,7 @@ export function Profile() {
             onChange={(e) => {
               void savePreference({ default_service_type_id: e.target.value || null });
             }}
-            className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+            className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
           >
             <option value="">No default</option>
             {services.map((s) => (
@@ -325,7 +325,7 @@ export function Profile() {
             onChange={(e) => {
               void savePreference({ theme_preference: e.target.value });
             }}
-            className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+            className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
           >
             {THEME_OPTIONS.map((t) => (
               <option key={t.value} value={t.value}>

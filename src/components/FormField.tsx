@@ -7,7 +7,7 @@ export function TextField({
       <span className="text-sm font-medium text-ink">{label}</span>
       <input
         {...props}
-        className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+        className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
       />
     </label>
   );
@@ -23,7 +23,7 @@ export function SelectField({
       <span className="text-sm font-medium text-ink">{label}</span>
       <select
         {...props}
-        className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+        className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
       >
         {children}
       </select>

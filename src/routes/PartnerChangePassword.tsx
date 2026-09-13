@@ -51,7 +51,7 @@ export function PartnerChangePassword() {
             <button
               type="button"
               onClick={() => navigate("/partner")}
-              className="mt-2 h-11 rounded-control bg-primary px-6 text-sm font-semibold text-primary-foreground"
+              className="mt-2 h-11 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-elevation-1"
             >
               Back to dashboard
             </button>
@@ -64,7 +64,7 @@ export function PartnerChangePassword() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
               />
               {password.length > 0 && !passwordValid && (
                 <p className="mt-1 text-sm text-danger">
@@ -79,7 +79,7 @@ export function PartnerChangePassword() {
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
               />
               {confirm.length > 0 && !matches && (
                 <p className="mt-1 text-sm text-danger">Passwords don&apos;t match.</p>
@@ -91,7 +91,7 @@ export function PartnerChangePassword() {
             <button
               type="submit"
               disabled={saving || !passwordValid || !matches}
-              className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-60"
+              className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-60"
             >
               {saving ? "Saving…" : "Update password"}
             </button>

@@ -148,7 +148,7 @@ export function ProfileEdit() {
 
               <div>
                 <span className="text-sm font-medium text-ink">Phone number</span>
-                <div className="mt-1 flex items-center rounded-control border border-line bg-card focus-within:border-primary">
+                <div className="mt-1 flex items-center rounded-t-control border-0 border-b-2 border-line bg-surface-variant focus-within:border-primary">
                   <span className="pl-3 text-base text-muted">+91</span>
                   <input
                     value={form.phone}
@@ -156,7 +156,7 @@ export function ProfileEdit() {
                     onBlur={() => markTouched("phone")}
                     placeholder="98765 43210"
                     inputMode="numeric"
-                    className="w-full rounded-control bg-transparent px-2 py-2.5 text-base text-ink focus:outline-none"
+                    className="w-full rounded-t-control bg-transparent px-2 py-2.5 text-base text-ink focus:outline-none"
                   />
                 </div>
                 {touched.phone && !phoneValid && (
@@ -271,7 +271,7 @@ export function ProfileEdit() {
                   placeholder="Ring twice, my roommate sleeps late."
                   rows={4}
                   maxLength={NOTES_MAX}
-                  className="w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                  className="w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
                 />
                 <p className="mt-1 text-right text-xs text-muted">
                   {form.notes.length}/{NOTES_MAX}
@@ -297,7 +297,7 @@ export function ProfileEdit() {
             void handleSave();
           }}
           disabled={!dirty || !formValid || saving}
-          className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-40"
+          className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-40"
         >
           {saving ? "Saving…" : "Save changes"}
         </button>

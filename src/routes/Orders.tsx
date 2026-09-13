@@ -167,14 +167,14 @@ export function Orders() {
     <div className="flex flex-col gap-5">
       <h1 className="font-display text-xl font-bold text-ink">Orders</h1>
 
-      <div className="flex rounded-control bg-primary-soft p-1">
+      <div className="flex rounded-full bg-primary-soft p-1">
         {(["active", "history"] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
             className={cn(
-              "min-h-11 flex-1 rounded-control text-sm font-semibold capitalize transition-colors",
+              "min-h-11 flex-1 rounded-full text-sm font-semibold capitalize transition-colors",
               tab === t ? "bg-card text-ink shadow-sm" : "text-muted",
             )}
           >
@@ -206,7 +206,7 @@ export function Orders() {
               action={
                 <Link
                   to="/schedule"
-                  className="flex h-11 w-full items-center justify-center rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+                  className="flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1"
                 >
                   Schedule a pickup
                 </Link>
@@ -249,7 +249,7 @@ export function Orders() {
             ))}
           </div>
 
-          <div className="flex min-h-11 items-center gap-2 rounded-control border border-line bg-card px-3 py-2">
+          <div className="flex min-h-11 items-center gap-2 rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2">
             <Search size={16} className="text-muted" />
             <input
               value={search}
@@ -275,7 +275,7 @@ export function Orders() {
                 action={
                   <Link
                     to="/schedule"
-                    className="flex h-11 w-full items-center justify-center rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+                    className="flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1"
                   >
                     Schedule your first pickup
                   </Link>

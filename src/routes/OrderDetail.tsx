@@ -267,14 +267,14 @@ export function OrderDetail() {
                   void handleCancelOrder();
                 }}
                 disabled={cancelling}
-                className="h-11 w-full rounded-control bg-danger text-sm font-semibold text-white disabled:opacity-70"
+                className="h-11 w-full rounded-full bg-danger text-sm font-semibold text-white shadow-elevation-1 disabled:opacity-70"
               >
                 {cancelling ? "Cancelling…" : "Cancel pickup"}
               </button>
               <button
                 type="button"
                 onClick={() => setCancelDialogOpen(false)}
-                className="h-11 w-full rounded-control border border-line text-sm font-semibold text-ink"
+                className="h-11 w-full rounded-full border border-line text-sm font-semibold text-ink"
               >
                 Keep pickup
               </button>
@@ -363,7 +363,7 @@ export function OrderDetail() {
         {order.status !== "cancelled" && (pickupExpanded || pickupDone || deliveryExpanded) && (
           <div className="mt-6 flex flex-col gap-3">
             {pickupExpanded ? (
-              <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-card p-5">
+              <div className="flex flex-col items-center gap-3 rounded-card bg-card shadow-elevation-1 p-5">
                 <QRCodeSVG value={order.id} size={160} />
                 <p className="text-center text-sm text-muted">
                   Show this when you hand over your bag.
@@ -373,7 +373,7 @@ export function OrderDetail() {
                 </p>
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-card border border-line bg-card p-3.5">
+              <div className="flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                   <Check size={14} />
                 </span>
@@ -382,7 +382,7 @@ export function OrderDetail() {
             )}
 
             {deliveryExpanded && (
-              <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-card p-5">
+              <div className="flex flex-col items-center gap-3 rounded-card bg-card shadow-elevation-1 p-5">
                 <QRCodeSVG value={order.id} size={160} />
                 <p className="text-center text-sm text-muted">
                   Show this when your order is delivered.
@@ -393,7 +393,7 @@ export function OrderDetail() {
               </div>
             )}
             {deliveryDone && (
-              <div className="flex items-center gap-3 rounded-card border border-line bg-card p-3.5">
+              <div className="flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                   <Check size={14} />
                 </span>
@@ -406,7 +406,7 @@ export function OrderDetail() {
         {(hasDeclared || hasVerified) && (
           <div className="mt-6">
             <h2 className="text-sm font-semibold text-ink">Bag contents</h2>
-            <div className="mt-2 overflow-hidden rounded-card border border-line bg-card">
+            <div className="mt-2 overflow-hidden rounded-card bg-card shadow-elevation-1">
               <div className="grid grid-cols-3 gap-2 border-b border-line px-4 py-2 text-xs font-medium text-muted">
                 <span>Item</span>
                 <span className="text-center">You declared</span>
@@ -450,7 +450,7 @@ export function OrderDetail() {
                     },
                   })
                 }
-                className="mt-3 h-11 w-full rounded-control border border-warning text-sm font-semibold text-warning"
+                className="mt-3 h-11 w-full rounded-full border border-warning text-sm font-semibold text-warning"
               >
                 Something&apos;s missing
               </button>
@@ -460,7 +460,7 @@ export function OrderDetail() {
 
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-ink">Details</h2>
-          <div className="mt-2 flex flex-col gap-2 rounded-card border border-line bg-card p-4">
+          <div className="mt-2 flex flex-col gap-2 rounded-card bg-card shadow-elevation-1 p-4">
             <DetailRow
               label="Weight"
               value={order.weight_kg != null ? `${order.weight_kg} kg` : "Not yet weighed"}
@@ -484,7 +484,7 @@ export function OrderDetail() {
         </div>
 
         {order.partner && idx >= awaitingIdx && (
-          <div className="mt-6 flex items-center gap-3 rounded-card border border-line bg-card p-4">
+          <div className="mt-6 flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-4">
             {order.partner.avatar_url ? (
               <img
                 src={order.partner.avatar_url}
@@ -525,14 +525,14 @@ export function OrderDetail() {
           <div className="mt-6 flex gap-3">
             <button
               type="button"
-              className="h-11 flex-1 rounded-control border border-line text-sm font-semibold text-ink"
+              className="h-11 flex-1 rounded-full border border-line text-sm font-semibold text-ink"
             >
               Reschedule
             </button>
             <button
               type="button"
               onClick={() => setCancelDialogOpen(true)}
-              className="h-11 flex-1 rounded-control border border-danger text-sm font-semibold text-danger"
+              className="h-11 flex-1 rounded-full border border-danger text-sm font-semibold text-danger"
             >
               Cancel pickup
             </button>
@@ -540,7 +540,7 @@ export function OrderDetail() {
         )}
 
         {order.status === "delivered" && order.rating == null && (
-          <div className="mt-6 rounded-card border border-line bg-card p-4">
+          <div className="mt-6 rounded-card bg-card shadow-elevation-1 p-4">
             <p className="text-sm font-medium text-ink">Rate this order</p>
             <div className="mt-2 flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -563,7 +563,7 @@ export function OrderDetail() {
               onChange={(e) => setRatingComment(e.target.value)}
               placeholder="Anything you'd like to add? (optional)"
               rows={2}
-              className="mt-3 w-full rounded-control border border-line bg-card px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
+              className="mt-3 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
             />
             <button
               type="button"
@@ -571,7 +571,7 @@ export function OrderDetail() {
                 void handleSubmitRating();
               }}
               disabled={ratingValue === 0 || submittingRating}
-              className="mt-3 h-11 w-full rounded-control bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              className="mt-3 h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-50"
             >
               {submittingRating ? "Submitting…" : "Submit rating"}
             </button>

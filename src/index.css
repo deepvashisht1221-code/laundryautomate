@@ -5,6 +5,7 @@
 :root {
   --ink: #10262c;
   --surface: #f2f6f5;
+  --surface-variant: #dfe9e8;
   --card: #ffffff;
   --primary: #0e5c63;
   --primary-soft: #dcebea;
@@ -18,14 +19,15 @@
   --body-bg: #e7edec;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  --radius-card: 16px;
-  --radius-control: 12px;
+  --radius-card: 12px;
+  --radius-control: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --ink: #eaf2f1;
     --surface: #0b1618;
+    --surface-variant: #1c3033;
     --card: #132226;
     --primary: #4fd1c5;
     --primary-soft: #16333a;
@@ -43,6 +45,7 @@
 :root[data-theme="dark"] {
   --ink: #eaf2f1;
   --surface: #0b1618;
+  --surface-variant: #1c3033;
   --card: #132226;
   --primary: #4fd1c5;
   --primary-soft: #16333a;
@@ -71,6 +74,49 @@ body {
   color: var(--ink);
   font-family: "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* MD3-ish state layers: filled controls darken slightly, outlined/text
+   controls pick up a tonal tint, on hover and press. Purely CSS, keyed off
+   the utility classes already in use, so it applies app-wide with no
+   per-component changes. */
+button:not(:disabled),
+a {
+  transition:
+    filter 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+button.bg-primary:not(:disabled):hover,
+a.bg-primary:hover {
+  filter: brightness(0.94);
+}
+button.bg-primary:not(:disabled):active,
+a.bg-primary:active {
+  filter: brightness(0.88);
+}
+
+button.bg-danger:not(:disabled):hover,
+a.bg-danger:hover {
+  filter: brightness(0.94);
+}
+button.bg-danger:not(:disabled):active,
+a.bg-danger:active {
+  filter: brightness(0.88);
+}
+
+button.border-primary:not(:disabled):hover,
+a.border-primary:hover {
+  background-color: var(--primary-soft);
+}
+button.border-danger:not(:disabled):hover,
+a.border-danger:hover {
+  background-color: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+button.border-warning:not(:disabled):hover,
+a.border-warning:hover {
+  background-color: color-mix(in srgb, var(--warning) 12%, transparent);
 }
 
 a:focus-visible,

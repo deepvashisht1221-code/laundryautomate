@@ -19,6 +19,7 @@ export default {
       colors: {
         ink: "var(--ink)",
         surface: "var(--surface)",
+        "surface-variant": "var(--surface-variant)",
         card: "var(--card)",
         line: "var(--line)",
         muted: {
@@ -44,14 +45,17 @@ export default {
         foreground: "var(--ink)",
       },
       borderRadius: {
-        card: "16px",
-        control: "12px",
+        card: "12px",
+        control: "8px",
       },
       spacing: {
         screen: "20px",
       },
       boxShadow: {
         float: "0 8px 24px -8px rgb(16 38 44 / 0.18)",
+        "elevation-1": "0 1px 2px rgb(16 38 44 / 0.12), 0 1px 3px 1px rgb(16 38 44 / 0.08)",
+        "elevation-2": "0 1px 2px rgb(16 38 44 / 0.14), 0 2px 6px 2px rgb(16 38 44 / 0.10)",
+        "elevation-3": "0 1px 3px rgb(16 38 44 / 0.16), 0 4px 8px 3px rgb(16 38 44 / 0.10)",
       },
       maxWidth: {
         app: "480px",

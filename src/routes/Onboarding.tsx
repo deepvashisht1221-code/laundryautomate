@@ -129,7 +129,7 @@ export function Onboarding() {
               Let's set you up
             </h1>
 
-            <div className="flex flex-col gap-3 rounded-card border border-line bg-card p-4">
+            <div className="flex flex-col gap-3 rounded-card bg-card shadow-elevation-1 p-4">
               <div>
                 <span className="text-sm text-muted">Full name</span>
                 <p className="text-base text-ink">{fullName || "—"}</p>
@@ -158,7 +158,7 @@ export function Onboarding() {
 
             <div>
               <span className="text-sm font-medium text-ink">Phone number</span>
-              <div className="mt-1 flex items-center rounded-control border border-line bg-card focus-within:border-primary">
+              <div className="mt-1 flex items-center rounded-t-control border-0 border-b-2 border-line bg-surface-variant focus-within:border-primary">
                 <span className="pl-3 text-base text-muted">+91</span>
                 <input
                   value={phone}
@@ -167,7 +167,7 @@ export function Onboarding() {
                   }
                   placeholder="98765 43210"
                   inputMode="numeric"
-                  className="w-full rounded-control bg-transparent px-2 py-2.5 text-base text-ink focus:outline-none"
+                  className="w-full rounded-t-control bg-transparent px-2 py-2.5 text-base text-ink focus:outline-none"
                 />
               </div>
               {attempted && !phoneValid && (
@@ -299,7 +299,7 @@ export function Onboarding() {
                 placeholder="Ring twice, my roommate sleeps late."
                 rows={4}
                 maxLength={NOTES_MAX}
-                className="w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                className="w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
               />
               <p className="mt-1 text-right text-xs text-muted">
                 {notes.length}/{NOTES_MAX}
@@ -340,7 +340,7 @@ export function Onboarding() {
           <button
             type="button"
             onClick={goNext}
-            className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground"
+            className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1"
           >
             Continue
           </button>
@@ -352,7 +352,7 @@ export function Onboarding() {
               onClick={() => {
                 void finish(notes.trim() || null);
               }}
-              className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-50"
+              className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-50"
             >
               {saving ? "Setting up your account…" : "Finish setup"}
             </button>

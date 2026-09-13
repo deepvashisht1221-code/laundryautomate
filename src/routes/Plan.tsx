@@ -217,7 +217,7 @@ export function Plan() {
                 <button
                   type="button"
                   onClick={closeConfirm}
-                  className="mt-4 h-11 w-full rounded-control bg-primary text-sm font-semibold text-primary-foreground"
+                  className="mt-4 h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1"
                 >
                   Done
                 </button>
@@ -244,14 +244,14 @@ export function Plan() {
                       void handleConfirmSwitch();
                     }}
                     disabled={switching}
-                    className="h-11 w-full rounded-control bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-70"
+                    className="h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-70"
                   >
                     {switching ? "Confirming…" : "Confirm"}
                   </button>
                   <button
                     type="button"
                     onClick={closeConfirm}
-                    className="h-11 w-full rounded-control border border-line text-sm font-semibold text-ink"
+                    className="h-11 w-full rounded-full border border-line text-sm font-semibold text-ink"
                   >
                     Cancel
                   </button>
@@ -263,7 +263,7 @@ export function Plan() {
       )}
 
       {planRow && (
-        <div className="rounded-card border border-line bg-card p-5">
+        <div className="rounded-card bg-card shadow-elevation-1 p-5">
           <div className="flex items-center gap-5">
             <QuotaRing used={planRow.quota_used_kg} total={planRow.plans.monthly_quota_kg ?? 0} />
             <div className="flex-1">
@@ -338,7 +338,7 @@ export function Plan() {
                   <button
                     type="button"
                     onClick={() => setConfirmTarget(plan)}
-                    className="h-11 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
+                    className="h-11 rounded-full border border-primary px-4 text-sm font-semibold text-primary"
                   >
                     {planRow ? "Switch to this" : "Choose plan"}
                   </button>
@@ -348,7 +348,7 @@ export function Plan() {
           );
         })}
 
-        <div className="rounded-card border border-line bg-card p-4">
+        <div className="rounded-card bg-card shadow-elevation-1 p-4">
           <p className="text-base font-semibold text-ink">Pay as you go</p>
           <p className="mt-0.5 text-sm text-muted">No monthly commitment</p>
           <ul className="mt-2 flex flex-col gap-1">
@@ -365,7 +365,7 @@ export function Plan() {
               <button
                 type="button"
                 onClick={() => setConfirmTarget("payg")}
-                className="h-11 rounded-control border border-primary px-4 text-sm font-semibold text-primary"
+                className="h-11 rounded-full border border-primary px-4 text-sm font-semibold text-primary"
               >
                 Switch to this
               </button>

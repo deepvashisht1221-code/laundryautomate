@@ -80,7 +80,7 @@ export function Login() {
               void handleContinue();
             }}
             disabled={isSigningIn}
-            className="flex h-[52px] w-full items-center justify-center gap-3 rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-70"
+            className="flex h-[52px] w-full items-center justify-center gap-3 rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-70"
           >
             {isSigningIn ? (
               <>

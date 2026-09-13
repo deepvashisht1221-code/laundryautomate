@@ -26,7 +26,7 @@ export function OrderStubCard({
   return (
     <Link
       to={`/orders/${orderId}`}
-      className={cn("block overflow-hidden rounded-card border border-line bg-card", className)}
+      className={cn("block overflow-hidden rounded-card bg-card shadow-elevation-1", className)}
     >
       <div className="flex">
         <div className="flex w-[36%] shrink-0 items-center justify-center border-r border-dashed border-line bg-accent/15 px-2 py-6">

@@ -129,7 +129,7 @@ function AddressSheet({
                 setVillage(e.target.value);
                 setBlock("");
               }}
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             >
               <option value="">Select village</option>
               {Object.keys(VILLAGE_BLOCKS).map((v) => (
@@ -146,7 +146,7 @@ function AddressSheet({
               value={block}
               onChange={(e) => setBlock(e.target.value)}
               disabled={!village}
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             >
               <option value="">Select block</option>
               {(VILLAGE_BLOCKS[village] ?? []).map((b) => (
@@ -162,7 +162,7 @@ function AddressSheet({
             <select
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             >
               <option value="">Select floor</option>
               {FLOORS.map((f) => (
@@ -178,7 +178,7 @@ function AddressSheet({
             <input
               value={roomNumber}
               onChange={(e) => setRoomNumber(e.target.value)}
-              className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+              className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -211,7 +211,7 @@ function AddressSheet({
             void handleSave();
           }}
           disabled={saving}
-          className="mt-6 h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground disabled:opacity-70"
+          className="mt-6 h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-70"
         >
           {saving ? "Saving…" : "Save address"}
         </button>
@@ -428,14 +428,14 @@ export function Schedule() {
           <button
             type="button"
             onClick={() => navigate("/orders")}
-            className="h-[52px] w-full rounded-control bg-primary text-base font-semibold text-primary-foreground"
+            className="h-[52px] w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1"
           >
             Track this order
           </button>
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="h-[52px] w-full rounded-control border border-line text-base font-semibold text-ink"
+            className="h-[52px] w-full rounded-full border border-line text-base font-semibold text-ink"
           >
             Back to home
           </button>
@@ -472,7 +472,7 @@ export function Schedule() {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="mt-3 h-11 rounded-control border border-line px-6 text-sm font-semibold text-ink"
+          className="mt-3 h-11 rounded-full border border-line px-6 text-sm font-semibold text-ink"
         >
           Back to home
         </button>
@@ -575,7 +575,7 @@ export function Schedule() {
                 Skip this
               </button>
 
-              <div className="mt-3 flex flex-col divide-y divide-line rounded-card border border-line bg-card">
+              <div className="mt-3 flex flex-col divide-y divide-line rounded-card bg-card shadow-elevation-1">
                 {ITEM_CATEGORIES.map((cat) => (
                   <div key={cat.key} className="flex items-center justify-between px-4 py-3">
                     <span className="text-sm text-ink">{cat.label}</span>
@@ -662,7 +662,7 @@ export function Schedule() {
             </div>
 
             {profile && (
-              <div className="mt-2 rounded-card border border-line bg-card p-4">
+              <div className="mt-2 rounded-card bg-card shadow-elevation-1 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-ink">Pickup address</p>
@@ -691,7 +691,7 @@ export function Schedule() {
           <div className="flex flex-col gap-6">
             <h1 className="font-display text-xl font-bold text-ink">Confirm your pickup</h1>
 
-            <div className="overflow-hidden rounded-card border border-line bg-card">
+            <div className="overflow-hidden rounded-card bg-card shadow-elevation-1">
               <div className="flex">
                 <div className="flex w-[30%] shrink-0 flex-col items-center justify-center border-r border-dashed border-line bg-accent/15 px-2 py-6">
                   <p className="font-display text-2xl font-bold tabular-nums text-ink">
@@ -759,7 +759,7 @@ export function Schedule() {
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 rows={3}
                 placeholder="E.g. handle the blazer with care"
-                className="mt-1 w-full rounded-control border border-line bg-card px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-t-control border-0 border-b-2 border-line bg-surface-variant px-3 py-2.5 text-base text-ink focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -781,7 +781,7 @@ export function Schedule() {
             type="button"
             onClick={goNext}
             disabled={!canProceed}
-            className="h-11 rounded-control bg-primary px-6 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+            className="h-11 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-40"
           >
             Next
           </button>
@@ -792,7 +792,7 @@ export function Schedule() {
               void handleConfirm();
             }}
             disabled={confirming}
-            className="h-11 rounded-control bg-primary px-6 text-sm font-semibold text-primary-foreground disabled:opacity-70"
+            className="h-11 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-70"
           >
             {confirming ? "Confirming…" : "Confirm pickup"}
           </button>
