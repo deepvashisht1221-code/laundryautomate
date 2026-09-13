@@ -400,13 +400,37 @@ export function PartnerDashboard() {
     setCreating(true);
     setCreateError(null);
 
+    const startTime = `${pickupTime}:00`;
+    const { data: existing, error: checkError } = await supabase
+      .from("slots")
+      .select("village")
+      .eq("partner_id", user.id)
+      .eq("date", date)
+      .eq("start_time", startTime)
+      .in("village", villages);
+
+    if (checkError) {
+      setCreating(false);
+      setCreateError("Couldn't check for existing timings. Please try again.");
+      return;
+    }
+
+    const duplicateVillages = new Set((existing ?? []).map((s) => s.village));
+    const newVillages = villages.filter((v) => !duplicateVillages.has(v));
+
+    if (newVillages.length === 0) {
+      setCreating(false);
+      setCreateError("You've already added this pickup timing for the selected village(s).");
+      return;
+    }
+
     const { error: insertError } = await supabase.from("slots").insert(
-      villages.map((village) => ({
+      newVillages.map((village) => ({
         partner_id: user.id,
         village,
         date,
-        start_time: `${pickupTime}:00`,
-        end_time: `${pickupTime}:00`,
+        start_time: startTime,
+        end_time: startTime,
         capacity: UNLIMITED_CAPACITY,
       })),
     );
@@ -415,6 +439,11 @@ export function PartnerDashboard() {
     if (insertError) {
       setCreateError("Couldn't add this slot. Please try again.");
       return;
+    }
+    if (duplicateVillages.size > 0) {
+      setCreateError(
+        `Skipped ${Array.from(duplicateVillages).join(", ")} — already added for this date and time.`,
+      );
     }
     setVillages([]);
     await load();
