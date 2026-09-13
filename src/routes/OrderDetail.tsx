@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import type { Tables, Enums } from "@/types/database";
+import type { Tables } from "@/types/database";
 import {
   STATUS_META,
-  MAIN_STEPS,
+  PAYMENT_STATUS_META,
   buildTimeline,
-  mainStatusIndex,
   ISSUE_TYPE_LABEL,
   initials,
   type TimelineStep,
 } from "@/lib/format";
+import { uploadOrderPhoto } from "@/lib/uploadPhoto";
 import { ITEM_CATEGORIES } from "@/lib/estimate";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/Skeleton";
@@ -31,12 +30,6 @@ const PILL_CLASS: Record<string, string> = {
   "bg-primary": "bg-primary text-white",
   "bg-success": "bg-success text-white",
   "bg-danger": "bg-danger text-white",
-};
-
-const PAYMENT_LABEL: Record<Enums<"payment_status_type">, string> = {
-  unpaid: "Unpaid",
-  paid: "Paid",
-  covered_by_plan: "Covered by plan",
 };
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -89,6 +82,11 @@ export function OrderDetail() {
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentPreview, setPaymentPreview] = useState<string | null>(null);
+  const [uploadingPayment, setUploadingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id || !user) return;
@@ -181,6 +179,49 @@ export function OrderDetail() {
     }
   }
 
+  function handlePickPaymentFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (paymentPreview) URL.revokeObjectURL(paymentPreview);
+    setPaymentFile(file);
+    setPaymentPreview(URL.createObjectURL(file));
+    setPaymentError(null);
+  }
+
+  async function handleSubmitPayment() {
+    if (!order || !paymentFile) return;
+    setUploadingPayment(true);
+    setPaymentError(null);
+
+    try {
+      const url = await uploadOrderPhoto(order.id, "payment", paymentFile);
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          payment_photo_url: url,
+          payment_status: "submitted",
+          payment_submitted_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
+      if (error) throw error;
+
+      setOrder({
+        ...order,
+        payment_photo_url: url,
+        payment_status: "submitted",
+        payment_submitted_at: new Date().toISOString(),
+      });
+      if (paymentPreview) URL.revokeObjectURL(paymentPreview);
+      setPaymentFile(null);
+      setPaymentPreview(null);
+    } catch {
+      setPaymentError("Couldn't upload your payment screenshot. Please try again.");
+    } finally {
+      setUploadingPayment(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 px-screen py-4">
@@ -215,7 +256,7 @@ export function OrderDetail() {
   }
 
   const meta = STATUS_META[order.status];
-  const timeline = buildTimeline(order.status, events);
+  const timeline = buildTimeline(order, events);
   const currentIndex = timeline.findIndex((s) => s.state === "current");
   const fillPercent =
     timeline.length <= 1
@@ -223,13 +264,9 @@ export function OrderDetail() {
       : ((currentIndex === -1 ? timeline.length - 1 : currentIndex) / (timeline.length - 1)) *
         100;
 
-  const idx = mainStatusIndex(order.status, events);
-  const awaitingIdx = MAIN_STEPS.indexOf("awaiting_pickup");
-  const outForDeliveryIdx = MAIN_STEPS.indexOf("out_for_delivery");
-  const pickupExpanded = order.status !== "cancelled" && idx <= awaitingIdx;
-  const pickupDone = order.status !== "cancelled" && idx > awaitingIdx;
-  const deliveryExpanded = order.status !== "cancelled" && idx === outForDeliveryIdx;
-  const deliveryDone = order.status !== "cancelled" && idx > outForDeliveryIdx;
+  const paymentNeeded = order.status === "delivered" && order.payment_status !== "covered_by_plan";
+  const canUploadPayment =
+    paymentNeeded && (order.payment_status === "unpaid" || order.payment_status === "rejected");
 
   const declared = (order.declared_items ?? {}) as Record<string, number>;
   const verified = order.verified_items as Record<string, number> | null;
@@ -360,44 +397,101 @@ export function OrderDetail() {
           </div>
         </div>
 
-        {order.status !== "cancelled" && (pickupExpanded || pickupDone || deliveryExpanded) && (
-          <div className="mt-6 flex flex-col gap-3">
-            {pickupExpanded ? (
-              <div className="flex flex-col items-center gap-3 rounded-card bg-card shadow-elevation-1 p-5">
-                <QRCodeSVG value={order.id} size={160} />
-                <p className="text-center text-sm text-muted">
-                  Show this when you hand over your bag.
-                </p>
-                <p className="font-display text-sm font-semibold tabular-nums text-ink">
-                  {order.order_code}
-                </p>
+        {(order.pickup_photo_url || order.dropoff_photo_url) && (
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {order.pickup_photo_url && (
+              <div className="overflow-hidden rounded-card bg-card shadow-elevation-1">
+                <img src={order.pickup_photo_url} alt="Pickup" className="aspect-square w-full object-cover" />
+                <p className="p-2.5 text-center text-xs font-medium text-ink">Pickup photo</p>
               </div>
-            ) : (
-              <div className="flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                  <Check size={14} />
-                </span>
-                <p className="text-sm text-ink">Pickup handoff complete</p>
+            )}
+            {order.dropoff_photo_url && (
+              <div className="overflow-hidden rounded-card bg-card shadow-elevation-1">
+                <img
+                  src={order.dropoff_photo_url}
+                  alt="Drop-off"
+                  className="aspect-square w-full object-cover"
+                />
+                <p className="p-2.5 text-center text-xs font-medium text-ink">Drop-off photo</p>
               </div>
+            )}
+          </div>
+        )}
+
+        {paymentNeeded && (
+          <div className="mt-6 rounded-card bg-card shadow-elevation-1 p-4">
+            <h2 className="text-sm font-semibold text-ink">Payment</h2>
+
+            {order.payment_status === "rejected" && (
+              <p className="mt-1.5 text-sm text-danger">
+                Your payment screenshot wasn&apos;t verified. Please upload it again.
+              </p>
             )}
 
-            {deliveryExpanded && (
-              <div className="flex flex-col items-center gap-3 rounded-card bg-card shadow-elevation-1 p-5">
-                <QRCodeSVG value={order.id} size={160} />
-                <p className="text-center text-sm text-muted">
-                  Show this when your order is delivered.
-                </p>
-                <p className="font-display text-sm font-semibold tabular-nums text-ink">
-                  {order.order_code}
-                </p>
+            {canUploadPayment ? (
+              <div className="mt-3 flex flex-col gap-3">
+                {paymentPreview ? (
+                  <img
+                    src={paymentPreview}
+                    alt="Payment screenshot"
+                    className="max-h-56 w-full rounded-control object-contain"
+                  />
+                ) : (
+                  <label className="flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-line py-6 text-muted">
+                    <Camera size={20} />
+                    <span className="text-sm">Upload payment screenshot</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePickPaymentFile}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                {paymentError && <p className="text-sm text-danger">{paymentError}</p>}
+                {paymentFile && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleSubmitPayment();
+                      }}
+                      disabled={uploadingPayment}
+                      className="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-elevation-1 disabled:opacity-60"
+                    >
+                      {uploadingPayment ? "Uploading…" : "Submit payment proof"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (paymentPreview) URL.revokeObjectURL(paymentPreview);
+                        setPaymentFile(null);
+                        setPaymentPreview(null);
+                      }}
+                      className="h-11 rounded-full border border-line px-4 text-sm font-semibold text-ink"
+                    >
+                      Retake
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-            {deliveryDone && (
-              <div className="flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                  <Check size={14} />
-                </span>
-                <p className="text-sm text-ink">Delivery handoff complete</p>
+            ) : (
+              <div className="mt-3 flex flex-col gap-3">
+                {order.payment_photo_url && (
+                  <img
+                    src={order.payment_photo_url}
+                    alt="Payment screenshot"
+                    className="max-h-56 w-full rounded-control object-contain"
+                  />
+                )}
+                <div className="flex items-center gap-2">
+                  <span className={cn("h-2 w-2 rounded-full", PAYMENT_STATUS_META[order.payment_status].dot)} />
+                  <p className="text-sm text-ink">
+                    {order.payment_status === "paid"
+                      ? "Payment verified — booking complete"
+                      : "Waiting for your partner to verify this payment"}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -475,7 +569,7 @@ export function OrderDetail() {
                     : "—"
               }
             />
-            <DetailRow label="Payment" value={PAYMENT_LABEL[order.payment_status]} />
+            <DetailRow label="Payment" value={PAYMENT_STATUS_META[order.payment_status].label} />
             {order.slots?.block && <DetailRow label="Pickup block" value={order.slots.block} />}
             {order.special_instructions && (
               <DetailRow label="Instructions" value={order.special_instructions} />
@@ -483,7 +577,7 @@ export function OrderDetail() {
           </div>
         </div>
 
-        {order.partner && idx >= awaitingIdx && (
+        {order.partner && order.status !== "cancelled" && (
           <div className="mt-6 flex items-center gap-3 rounded-card bg-card shadow-elevation-1 p-4">
             {order.partner.avatar_url ? (
               <img
@@ -521,7 +615,7 @@ export function OrderDetail() {
           </div>
         )}
 
-        {(order.status === "scheduled" || order.status === "awaiting_pickup") && (
+        {order.status === "scheduled" && (
           <div className="mt-6 flex gap-3">
             <button
               type="button"

@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
-import { nextMilestoneText, relevantAt } from "@/lib/format";
+import { nextMilestoneText, relevantAt, isBookingComplete } from "@/lib/format";
 import { OrderStubCard } from "@/components/OrderStubCard";
 import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
@@ -91,7 +91,7 @@ export function Orders() {
       .from("orders")
       .select("*, service_types(name), slots(date, start_time, end_time)")
       .eq("user_id", user.id)
-      .not("status", "in", "(delivered,cancelled)");
+      .neq("status", "cancelled");
 
     if (error) {
       const cached = loadCache<ActiveOrderRow[]>(ACTIVE_CACHE_KEY);
@@ -103,9 +103,9 @@ export function Orders() {
       }
       return;
     }
-    const rows = ((data as ActiveOrderRow[] | null) ?? []).sort(
-      (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
-    );
+    const rows = ((data as ActiveOrderRow[] | null) ?? [])
+      .filter((o) => !isBookingComplete(o))
+      .sort((a, b) => relevantAt(a).getTime() - relevantAt(b).getTime());
     setActiveOrders(rows);
     setShowingCached(false);
     saveCache(ACTIVE_CACHE_KEY, rows);
@@ -125,7 +125,10 @@ export function Orders() {
       setHistoryError(true);
       return;
     }
-    setHistoryOrders((data as HistoryOrderRow[] | null) ?? []);
+    const rows = ((data as HistoryOrderRow[] | null) ?? []).filter(
+      (o) => o.status === "cancelled" || isBookingComplete(o),
+    );
+    setHistoryOrders(rows);
   }, [user]);
 
   useEffect(() => {

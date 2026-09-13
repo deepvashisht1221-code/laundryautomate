@@ -48,17 +48,33 @@ export function formatSlotTime(start: string) {
 }
 
 type OrderStatus = Enums<"order_status_type">;
+type PaymentStatus = Enums<"payment_status_type">;
 
 export const STATUS_META: Record<OrderStatus, { label: string; dot: string }> = {
-  scheduled: { label: "Scheduled", dot: "bg-muted" },
+  scheduled: { label: "Slot booked", dot: "bg-muted" },
   awaiting_pickup: { label: "Awaiting pickup", dot: "bg-primary" },
-  picked_up: { label: "Picked up", dot: "bg-primary" },
-  washing: { label: "Washing", dot: "bg-primary" },
+  picked_up: { label: "Pickup done", dot: "bg-primary" },
+  washing: { label: "In progress", dot: "bg-primary" },
   ready: { label: "Ready", dot: "bg-success" },
   out_for_delivery: { label: "Out for delivery", dot: "bg-success" },
-  delivered: { label: "Delivered", dot: "bg-success" },
+  delivered: { label: "Drop done", dot: "bg-success" },
   cancelled: { label: "Cancelled", dot: "bg-muted" },
   issue_raised: { label: "Issue reported", dot: "bg-danger" },
+};
+
+export function isBookingComplete(order: { status: OrderStatus; payment_status: PaymentStatus }) {
+  return (
+    order.status === "delivered" &&
+    (order.payment_status === "paid" || order.payment_status === "covered_by_plan")
+  );
+}
+
+export const PAYMENT_STATUS_META: Record<PaymentStatus, { label: string; dot: string }> = {
+  unpaid: { label: "Payment pending", dot: "bg-muted" },
+  submitted: { label: "Awaiting verification", dot: "bg-primary" },
+  rejected: { label: "Payment not verified", dot: "bg-danger" },
+  paid: { label: "Paid", dot: "bg-success" },
+  covered_by_plan: { label: "Covered by plan", dot: "bg-success" },
 };
 
 export const STAGE_OF_STATUS: Record<OrderStatus, number> = {
@@ -84,18 +100,11 @@ export function relevantAt(order: {
   return new Date(ts ?? order.created_at);
 }
 
-export const MAIN_STEPS: OrderStatus[] = [
-  "scheduled",
-  "awaiting_pickup",
-  "picked_up",
-  "washing",
-  "ready",
-  "out_for_delivery",
-  "delivered",
-];
+export const MAIN_STEPS: OrderStatus[] = ["scheduled", "picked_up", "washing", "delivered"];
 
 type MilestoneOrder = {
   status: OrderStatus;
+  payment_status?: PaymentStatus;
   estimated_delivery_at: string | null;
   pickup_at: string | null;
   slots: { date: string; start_time: string; end_time: string } | null;
@@ -119,13 +128,24 @@ export function nextMilestoneText(order: MilestoneOrder) {
     case "washing":
       return deliveryAt
         ? `Ready by ${formatDayLabel(deliveryAt)}, around ${formatClock(deliveryAt)}`
-        : "Being washed";
+        : "In progress";
     case "ready":
       return "Ready — on its way back to you soon";
     case "out_for_delivery":
       return deliveryAt
         ? `Arriving ${formatDayLabel(deliveryAt)}, around ${formatClock(deliveryAt)}`
         : "Out for delivery";
+    case "delivered":
+      switch (order.payment_status) {
+        case "unpaid":
+          return "Upload your payment screenshot to finish up";
+        case "submitted":
+          return "Payment submitted — awaiting verification";
+        case "rejected":
+          return "Payment not verified — please upload again";
+        default:
+          return "Booking complete";
+      }
     case "issue_raised":
       return "We're looking into an issue with this order";
     default:
@@ -155,7 +175,59 @@ export function mainStatusIndex(status: OrderStatus, events: OrderEventLike[]): 
   return MAIN_STEPS.indexOf(status);
 }
 
-export function buildTimeline(status: OrderStatus, events: OrderEventLike[]): TimelineStep[] {
+export type OrderForTimeline = {
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  payment_submitted_at: string | null;
+  payment_verified_at: string | null;
+};
+
+function paymentSteps(order: OrderForTimeline): TimelineStep[] {
+  if (order.payment_status === "covered_by_plan") return [];
+
+  let doneState: TimelineStep["state"];
+  let verifiedState: TimelineStep["state"];
+  let doneNote: string | null = null;
+
+  switch (order.payment_status) {
+    case "submitted":
+      doneState = "completed";
+      verifiedState = "current";
+      break;
+    case "rejected":
+      doneState = "current";
+      verifiedState = "future";
+      doneNote = "Not verified — please upload your payment screenshot again.";
+      break;
+    case "paid":
+      doneState = "completed";
+      verifiedState = "completed";
+      break;
+    default:
+      doneState = "current";
+      verifiedState = "future";
+  }
+
+  return [
+    {
+      key: "payment_submitted",
+      label: "Payment done",
+      timestamp: order.payment_submitted_at,
+      note: doneNote,
+      state: doneState,
+    },
+    {
+      key: "payment_verified",
+      label: "Payment verified",
+      timestamp: order.payment_verified_at,
+      note: null,
+      state: verifiedState,
+    },
+  ];
+}
+
+export function buildTimeline(order: OrderForTimeline, events: OrderEventLike[]): TimelineStep[] {
+  const status = order.status;
   const eventByStatus = new Map<OrderStatus, OrderEventLike>();
   for (const e of events) eventByStatus.set(e.status, e);
   const lastCompletedIndex = lastCompletedMainIndex(events);
@@ -204,7 +276,7 @@ export function buildTimeline(status: OrderStatus, events: OrderEventLike[]): Ti
   }
 
   const currentIndex = MAIN_STEPS.indexOf(status);
-  return MAIN_STEPS.map((s, i) => ({
+  const steps: TimelineStep[] = MAIN_STEPS.map((s, i) => ({
     key: s,
     label: STATUS_META[s].label,
     timestamp: eventByStatus.get(s)?.created_at ?? null,
@@ -216,4 +288,10 @@ export function buildTimeline(status: OrderStatus, events: OrderEventLike[]): Ti
           ? "current"
           : "future",
   }));
+
+  if (status === "delivered") {
+    steps.push(...paymentSteps(order));
+  }
+
+  return steps;
 }

@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, LogOut, Plus, Users } from "lucide-react";
+import { Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { VILLAGE_BLOCKS } from "@/lib/locations";
-import { formatDayLabel, formatSlotTime } from "@/lib/format";
+import { formatDayLabel, formatSlotTime, PAYMENT_STATUS_META } from "@/lib/format";
+import { uploadOrderPhoto } from "@/lib/uploadPhoto";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
@@ -14,7 +15,17 @@ import { EmptyState } from "@/components/EmptyState";
 
 type SlotRow = Tables<"slots">;
 
-type RosterOrder = Pick<Tables<"orders">, "id" | "order_code" | "bag_count"> & {
+type RosterOrder = Pick<
+  Tables<"orders">,
+  | "id"
+  | "order_code"
+  | "bag_count"
+  | "status"
+  | "payment_status"
+  | "pickup_photo_url"
+  | "dropoff_photo_url"
+  | "payment_photo_url"
+> & {
   profiles: Pick<Tables<"profiles">, "full_name" | "block" | "room_number" | "phone"> | null;
 };
 
@@ -22,6 +33,223 @@ const UNLIMITED_CAPACITY = 999999;
 
 function todayStr() {
   return format(new Date(), "yyyy-MM-dd");
+}
+
+const ROSTER_ORDER_COLUMNS =
+  "id, order_code, bag_count, status, payment_status, pickup_photo_url, dropoff_photo_url, payment_photo_url, profiles!orders_user_id_fkey(full_name, block, room_number, phone)";
+
+function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingKindRef = useRef<"pickup" | "dropoff" | null>(null);
+
+  function pickPhotoFor(kind: "pickup" | "dropoff") {
+    pendingKindRef.current = kind;
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const kind = pendingKindRef.current;
+    e.target.value = "";
+    if (!file || !kind) return;
+
+    setBusy(true);
+    setRowError(null);
+    try {
+      const url = await uploadOrderPhoto(order.id, kind, file);
+      if (kind === "pickup") {
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: "picked_up", pickup_photo_url: url })
+          .eq("id", order.id);
+        if (error) throw error;
+        await supabase.from("order_events").insert({
+          order_id: order.id,
+          status: "picked_up",
+          actor: "partner",
+        });
+      } else {
+        const { error } = await supabase
+          .from("orders")
+          .update({
+            status: "delivered",
+            dropoff_photo_url: url,
+            delivered_at: new Date().toISOString(),
+          })
+          .eq("id", order.id);
+        if (error) throw error;
+        await supabase.from("order_events").insert({
+          order_id: order.id,
+          status: "delivered",
+          actor: "partner",
+        });
+      }
+      onChanged();
+    } catch {
+      setRowError("Couldn't upload that photo. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startWashing() {
+    setBusy(true);
+    setRowError(null);
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "washing" })
+      .eq("id", order.id);
+    setBusy(false);
+    if (error) {
+      setRowError("Couldn't update this order. Please try again.");
+      return;
+    }
+    await supabase.from("order_events").insert({
+      order_id: order.id,
+      status: "washing",
+      actor: "partner",
+    });
+    onChanged();
+  }
+
+  async function reviewPayment(approve: boolean) {
+    setBusy(true);
+    setRowError(null);
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        payment_status: approve ? "paid" : "rejected",
+        payment_verified_at: approve ? new Date().toISOString() : null,
+      })
+      .eq("id", order.id);
+    setBusy(false);
+    if (error) {
+      setRowError("Couldn't update payment status. Please try again.");
+      return;
+    }
+    onChanged();
+  }
+
+  return (
+    <div className="flex flex-col gap-2.5 py-2.5 text-sm">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          void handleFileSelected(e);
+        }}
+        className="hidden"
+      />
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium text-ink">{order.profiles?.full_name ?? "Student"}</p>
+          <p className="text-xs text-muted">
+            {[order.profiles?.block, order.profiles?.room_number ? `Room ${order.profiles.room_number}` : null]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+        <div className="text-right text-xs text-muted">
+          <p>{order.order_code}</p>
+          <p>
+            {order.bag_count} bag{order.bag_count === 1 ? "" : "s"}
+          </p>
+        </div>
+      </div>
+
+      {(order.status === "scheduled" || order.status === "awaiting_pickup") && (
+        <button
+          type="button"
+          onClick={() => pickPhotoFor("pickup")}
+          disabled={busy}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          <Camera size={14} />
+          {busy ? "Uploading…" : "Mark picked up"}
+        </button>
+      )}
+
+      {order.status === "picked_up" && (
+        <button
+          type="button"
+          onClick={() => {
+            void startWashing();
+          }}
+          disabled={busy}
+          className="flex h-10 w-full items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {busy ? "Updating…" : "Start washing"}
+        </button>
+      )}
+
+      {order.status === "washing" && (
+        <button
+          type="button"
+          onClick={() => pickPhotoFor("dropoff")}
+          disabled={busy}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          <Camera size={14} />
+          {busy ? "Uploading…" : "Mark delivered"}
+        </button>
+      )}
+
+      {order.status === "delivered" && order.payment_status !== "covered_by_plan" && (
+        <div className="rounded-control bg-surface-variant p-2.5">
+          {order.payment_status === "submitted" && order.payment_photo_url ? (
+            <div className="flex flex-col gap-2">
+              <img
+                src={order.payment_photo_url}
+                alt="Payment screenshot"
+                className="max-h-40 w-full rounded-control object-contain"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void reviewPayment(true);
+                  }}
+                  disabled={busy}
+                  className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-success text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  <Check size={13} />
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void reviewPayment(false);
+                  }}
+                  disabled={busy}
+                  className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-danger text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  <X size={13} />
+                  Deny
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className={cn("h-2 w-2 rounded-full", PAYMENT_STATUS_META[order.payment_status].dot)} />
+              <p className="text-xs text-muted">
+                {order.payment_status === "paid"
+                  ? "Payment verified — booking complete"
+                  : order.payment_status === "rejected"
+                    ? "Waiting for student to re-upload payment"
+                    : "Waiting for student to submit payment"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {rowError && <p className="text-xs text-danger">{rowError}</p>}
+    </div>
+  );
 }
 
 function RosterPanel({ slotId }: { slotId: string }) {
@@ -32,7 +260,7 @@ function RosterPanel({ slotId }: { slotId: string }) {
     setError(false);
     const { data, error: fetchError } = await supabase
       .from("orders")
-      .select("id, order_code, bag_count, profiles!orders_user_id_fkey(full_name, block, room_number, phone)")
+      .select(ROSTER_ORDER_COLUMNS)
       .eq("pickup_slot_id", slotId);
     if (fetchError) {
       setError(true);
@@ -71,22 +299,7 @@ function RosterPanel({ slotId }: { slotId: string }) {
   return (
     <div className="flex flex-col divide-y divide-line px-4 pb-2">
       {orders.map((o) => (
-        <div key={o.id} className="flex items-center justify-between py-2.5 text-sm">
-          <div>
-            <p className="font-medium text-ink">{o.profiles?.full_name ?? "Student"}</p>
-            <p className="text-xs text-muted">
-              {[o.profiles?.block, o.profiles?.room_number ? `Room ${o.profiles.room_number}` : null]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-          <div className="text-right text-xs text-muted">
-            <p>{o.order_code}</p>
-            <p>
-              {o.bag_count} bag{o.bag_count === 1 ? "" : "s"}
-            </p>
-          </div>
-        </div>
+        <RosterOrderCard key={o.id} order={o} onChanged={load} />
       ))}
     </div>
   );

@@ -172,9 +172,14 @@ export type Database = {
           estimated_delivery_at: string | null
           id: string
           order_code: string
+          dropoff_photo_url: string | null
           partner_id: string | null
+          payment_photo_url: string | null
           payment_status: Database["public"]["Enums"]["payment_status_type"]
+          payment_submitted_at: string | null
+          payment_verified_at: string | null
           pickup_at: string | null
+          pickup_photo_url: string | null
           pickup_slot_id: string | null
           rating: number | null
           review: string | null
@@ -191,12 +196,17 @@ export type Database = {
           created_at?: string
           declared_items?: Json
           delivered_at?: string | null
+          dropoff_photo_url?: string | null
           estimated_delivery_at?: string | null
           id?: string
           order_code?: string
           partner_id?: string | null
+          payment_photo_url?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status_type"]
+          payment_submitted_at?: string | null
+          payment_verified_at?: string | null
           pickup_at?: string | null
+          pickup_photo_url?: string | null
           pickup_slot_id?: string | null
           rating?: number | null
           review?: string | null
@@ -213,12 +223,17 @@ export type Database = {
           created_at?: string
           declared_items?: Json
           delivered_at?: string | null
+          dropoff_photo_url?: string | null
           estimated_delivery_at?: string | null
           id?: string
           order_code?: string
           partner_id?: string | null
+          payment_photo_url?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status_type"]
+          payment_submitted_at?: string | null
+          payment_verified_at?: string | null
           pickup_at?: string | null
+          pickup_photo_url?: string | null
           pickup_slot_id?: string | null
           rating?: number | null
           review?: string | null
@@ -525,7 +540,12 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "issue_raised"
-      payment_status_type: "unpaid" | "paid" | "covered_by_plan"
+      payment_status_type:
+        | "unpaid"
+        | "paid"
+        | "covered_by_plan"
+        | "submitted"
+        | "rejected"
       pickup_point_type: "room_door" | "block_reception" | "common_room"
       pricing_unit_type: "per_kg" | "per_item"
       profile_role_type: "student" | "partner" | "admin"
@@ -677,7 +697,13 @@ export const Constants = {
         "cancelled",
         "issue_raised",
       ],
-      payment_status_type: ["unpaid", "paid", "covered_by_plan"],
+      payment_status_type: [
+        "unpaid",
+        "paid",
+        "covered_by_plan",
+        "submitted",
+        "rejected",
+      ],
       pickup_point_type: ["room_door", "block_reception", "common_room"],
       pricing_unit_type: ["per_kg", "per_item"],
       profile_role_type: ["student", "partner", "admin"],

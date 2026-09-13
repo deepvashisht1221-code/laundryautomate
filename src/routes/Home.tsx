@@ -10,6 +10,7 @@ import {
   formatSlotTime,
   nextMilestoneText,
   relevantAt,
+  isBookingComplete,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { OrderStubCard } from "@/components/OrderStubCard";
@@ -68,7 +69,7 @@ export function Home() {
         .from("orders")
         .select("*, service_types(name), slots(date, start_time, end_time, block)")
         .eq("user_id", user.id)
-        .not("status", "in", "(delivered,cancelled)"),
+        .neq("status", "cancelled"),
       supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
@@ -110,9 +111,9 @@ export function Home() {
       return;
     }
 
-    const sortedOrders = ((ordersRes.data as OrderRow[] | null) ?? []).sort(
-      (a, b) => relevantAt(a).getTime() - relevantAt(b).getTime(),
-    );
+    const sortedOrders = ((ordersRes.data as OrderRow[] | null) ?? [])
+      .filter((o) => !isBookingComplete(o))
+      .sort((a, b) => relevantAt(a).getTime() - relevantAt(b).getTime());
     setOrders(sortedOrders);
     setShowingCached(false);
     saveCache(ORDERS_CACHE_KEY, sortedOrders);
