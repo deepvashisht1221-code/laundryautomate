@@ -77,7 +77,7 @@ export function Home() {
       profile.village
         ? supabase
             .from("slots")
-            .select("*")
+            .select("*, partner:profiles!slots_partner_id_fkey(is_active)")
             .eq("village", profile.village)
             .not("partner_id", "is", null)
             .eq("is_open", true)
@@ -85,7 +85,9 @@ export function Home() {
             .order("date")
             .order("start_time")
             .limit(30)
-        : Promise.resolve({ data: [] as Tables<"slots">[] }),
+        : Promise.resolve({
+            data: [] as (Tables<"slots"> & { partner: { is_active: boolean } | null })[],
+          }),
       profile.block
         ? supabase
             .from("notices")
@@ -117,7 +119,9 @@ export function Home() {
 
     setUnreadCount(unreadRes.count ?? 0);
 
-    const openSlot = (slotRes.data ?? []).find((s) => s.booked_count < s.capacity);
+    const openSlot = (slotRes.data ?? []).find(
+      (s) => s.booked_count < s.capacity && s.partner?.is_active !== false,
+    );
     setNextSlot(openSlot ?? null);
 
     const foundNotice = (noticeRes.data ?? [])[0] ?? null;

@@ -13,7 +13,9 @@ import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
 
 type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
-type SlotWithPartner = Tables<"slots"> & { partner: { full_name: string | null } | null };
+type SlotWithPartner = Tables<"slots"> & {
+  partner: { full_name: string | null; is_active: boolean } | null;
+};
 
 function buildNext7Days(): Date[] {
   const today = new Date();
@@ -289,7 +291,7 @@ export function Schedule() {
     const end = format(weekDates[weekDates.length - 1], "yyyy-MM-dd");
     supabase
       .from("slots")
-      .select("*, partner:profiles!slots_partner_id_fkey(full_name)")
+      .select("*, partner:profiles!slots_partner_id_fkey(full_name, is_active)")
       .eq("village", profile.village)
       .not("partner_id", "is", null)
       .eq("is_open", true)
@@ -303,7 +305,10 @@ export function Schedule() {
           setSlotsLoaded(true);
           return;
         }
-        setAllSlots((data as SlotWithPartner[] | null) ?? []);
+        const active = ((data as SlotWithPartner[] | null) ?? []).filter(
+          (s) => s.partner?.is_active !== false,
+        );
+        setAllSlots(active);
         setSlotsLoaded(true);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 
@@ -11,14 +11,19 @@ const PARTNER_USERNAME_EMAILS: Record<string, string> = {
 export function PartnerLogin() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    (location.state as { disabled?: boolean } | null)?.disabled
+      ? "This partner account is currently disabled."
+      : null,
+  );
 
   useEffect(() => {
-    if (profile?.role === "partner") {
+    if (profile?.role === "partner" && profile.is_active) {
       navigate("/partner", { replace: true });
     }
   }, [profile, navigate]);
@@ -35,12 +40,30 @@ export function PartnerLogin() {
       return;
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (signInError) {
+      setSubmitting(false);
       setError("Invalid username or password.");
       return;
     }
+
+    const { data: partnerProfile } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("id", signInData.user.id)
+      .maybeSingle();
+
+    setSubmitting(false);
+
+    if (partnerProfile && !partnerProfile.is_active) {
+      await supabase.auth.signOut();
+      setError("This partner account is currently disabled.");
+      return;
+    }
+
     navigate("/partner", { replace: true });
   }
 

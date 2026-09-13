@@ -1,9 +1,17 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 
 export function RequirePartnerAuth({ children }: { children: ReactNode }) {
-  const { status, profile } = useAuth();
+  const { status, profile, signOut } = useAuth();
+
+  const disabled = profile?.role === "partner" && !profile.is_active;
+
+  useEffect(() => {
+    if (disabled) {
+      void signOut();
+    }
+  }, [disabled, signOut]);
 
   if (status === "loading") {
     return (
@@ -15,6 +23,12 @@ export function RequirePartnerAuth({ children }: { children: ReactNode }) {
 
   if (status === "signed_out") {
     return <Navigate to="/partner/login" replace />;
+  }
+
+  if (disabled) {
+    return (
+      <Navigate to="/partner/login" replace state={{ disabled: true }} />
+    );
   }
 
   if (profile && profile.role !== "partner") {

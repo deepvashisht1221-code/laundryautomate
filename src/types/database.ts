@@ -297,6 +297,7 @@ export type Database = {
           floor: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           notify_delivery_alerts: boolean
           notify_offers: boolean
           notify_pickup_reminders: boolean
@@ -321,6 +322,7 @@ export type Database = {
           floor?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           notify_delivery_alerts?: boolean
           notify_offers?: boolean
           notify_pickup_reminders?: boolean
@@ -345,6 +347,7 @@ export type Database = {
           floor?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           notify_delivery_alerts?: boolean
           notify_offers?: boolean
           notify_pickup_reminders?: boolean
