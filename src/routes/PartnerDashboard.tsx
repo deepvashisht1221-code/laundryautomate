@@ -319,6 +319,8 @@ export function PartnerDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const [tab, setTab] = useState<"slots" | "orders">("slots");
+
   const [slots, setSlots] = useState<SlotRow[] | null>(null);
   const [error, setError] = useState(false);
   const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
@@ -476,7 +478,27 @@ export function PartnerDashboard() {
         </div>
       </div>
 
+      <div className="px-screen pt-4">
+        <div className="flex rounded-full bg-primary-soft p-1">
+          {(["slots", "orders"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={cn(
+                "min-h-11 flex-1 rounded-full text-sm font-semibold capitalize transition-colors",
+                tab === t ? "bg-card text-ink shadow-sm" : "text-muted",
+              )}
+            >
+              {t === "slots" ? "Slots" : "Orders"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto px-screen py-5">
+        {tab === "slots" && (
+        <>
         <form
           onSubmit={handleCreateSlot}
           className="flex flex-col gap-4 rounded-card bg-card shadow-elevation-1 p-4"
@@ -603,8 +625,11 @@ export function PartnerDashboard() {
             })}
           </div>
         )}
+        </>)}
 
-        <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Orders</h2>
+        {tab === "orders" && (
+        <>
+        <h2 className="mb-2 text-sm font-semibold text-ink">Orders</h2>
 
         <div className="flex gap-2">
           <label className="flex-1">
@@ -678,6 +703,7 @@ export function PartnerDashboard() {
             </div>
           )}
         </div>
+        </>)}
       </div>
     </div>
   );
