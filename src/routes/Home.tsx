@@ -23,8 +23,6 @@ type OrderRow = Tables<"orders"> & {
   slots: { date: string; start_time: string; end_time: string; block: string } | null;
 };
 
-type PlanRow = Tables<"user_plans"> & { plans: Tables<"plans"> };
-
 const NOTICE_DISMISS_KEY = "dhobisb.dismissedNoticeId";
 const ORDERS_CACHE_KEY = "home.orders";
 
@@ -50,7 +48,6 @@ export function Home() {
 
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [planRow, setPlanRow] = useState<PlanRow | null>(null);
   const [nextSlot, setNextSlot] = useState<Tables<"slots"> | null>(null);
   const [notice, setNotice] = useState<Tables<"notices"> | null>(null);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
@@ -66,7 +63,7 @@ export function Home() {
     setError(false);
     const today = new Date().toISOString().slice(0, 10);
 
-    const [ordersRes, unreadRes, planRes, slotRes, noticeRes] = await Promise.all([
+    const [ordersRes, unreadRes, slotRes, noticeRes] = await Promise.all([
       supabase
         .from("orders")
         .select("*, service_types(name), slots(date, start_time, end_time, block)")
@@ -77,12 +74,6 @@ export function Home() {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("is_read", false),
-      supabase
-        .from("user_plans")
-        .select("*, plans(*)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle(),
       profile.village
         ? supabase
             .from("slots")
@@ -125,7 +116,6 @@ export function Home() {
     saveCache(ORDERS_CACHE_KEY, sortedOrders);
 
     setUnreadCount(unreadRes.count ?? 0);
-    setPlanRow((planRes.data as PlanRow | null) ?? null);
 
     const openSlot = (slotRes.data ?? []).find((s) => s.booked_count < s.capacity);
     setNextSlot(openSlot ?? null);
@@ -318,37 +308,6 @@ export function Home() {
         className="flex h-[52px] w-full items-center justify-center rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-elevation-1"
       >
         Schedule a pickup
-      </Link>
-
-      <Link
-        to="/plan"
-        className="flex items-center justify-between rounded-card bg-card shadow-elevation-1 p-4"
-      >
-        {planRow && planRow.plans.monthly_quota_kg != null ? (
-          <div className="flex-1">
-            <p className="text-sm font-medium text-ink">
-              {planRow.plans.name} ·{" "}
-              {(planRow.plans.monthly_quota_kg - planRow.quota_used_kg).toFixed(1)} of{" "}
-              {planRow.plans.monthly_quota_kg} kg left this month
-            </p>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{
-                  width: `${Math.max(
-                    0,
-                    Math.min(
-                      100,
-                      (1 - planRow.quota_used_kg / planRow.plans.monthly_quota_kg) * 100,
-                    ),
-                  )}%`,
-                }}
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm font-medium text-ink">You&apos;re on pay as you go. See plans.</p>
-        )}
       </Link>
 
       {upcoming.length > 0 && (

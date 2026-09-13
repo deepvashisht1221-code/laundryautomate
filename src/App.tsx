@@ -16,7 +16,8 @@ import { OrderDetail } from "@/routes/OrderDetail";
 import { ReportIssue } from "@/routes/ReportIssue";
 import { Home } from "@/routes/Home";
 import { Orders } from "@/routes/Orders";
-import { Plan } from "@/routes/Plan";
+// Plan feature is commented out for MVP — not needed yet.
+// import { Plan } from "@/routes/Plan";
 import { Profile } from "@/routes/Profile";
 import { ProfileEdit } from "@/routes/ProfileEdit";
 import { Notifications } from "@/routes/Notifications";
@@ -110,7 +111,7 @@ export function App() {
           >
             <Route path="/" element={<Home />} />
             <Route path="/orders" element={<Orders />} />
-            <Route path="/plan" element={<Plan />} />
+            {/* <Route path="/plan" element={<Plan />} /> */}
             <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

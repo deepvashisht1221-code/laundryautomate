@@ -278,10 +278,6 @@ export function Profile() {
       </Section>
 
       <Section title="Account">
-        <Link to="/plan" className="flex min-h-11 items-center justify-between text-sm">
-          <span className="text-ink">Your plan</span>
-          <ChevronRight size={16} className="text-muted" />
-        </Link>
         <Link to="/help" className="flex min-h-11 items-center justify-between text-sm">
           <span className="text-ink">Help &amp; support</span>
           <ChevronRight size={16} className="text-muted" />

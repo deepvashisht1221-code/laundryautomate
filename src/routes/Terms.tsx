@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { DESK_PHONE, DESK_EMAIL } from "@/lib/contact";
+import { DESK_EMAIL } from "@/lib/contact";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -137,10 +137,6 @@ export function Terms() {
           <Section title="Questions">
             <p>
               Reach the laundry desk at{" "}
-              <a href={`tel:${DESK_PHONE.replace(/\s/g, "")}`} className="text-primary underline">
-                {DESK_PHONE}
-              </a>{" "}
-              or{" "}
               <a href={`mailto:${DESK_EMAIL}`} className="text-primary underline">
                 {DESK_EMAIL}
               </a>

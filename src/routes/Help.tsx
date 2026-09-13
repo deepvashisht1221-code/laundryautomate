@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronDown, Search, MessageCircle, Phone, Mail, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronDown, Search, Mail, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { DESK_PHONE, DESK_EMAIL } from "@/lib/contact";
+import { DESK_EMAIL } from "@/lib/contact";
 import { Skeleton } from "@/components/Skeleton";
 import { InlineError } from "@/components/InlineError";
 import { EmptyState } from "@/components/EmptyState";
@@ -212,34 +212,6 @@ export function Help() {
           <p className="mt-1 text-xs text-muted">{DESK_HOURS}</p>
 
           <div className="mt-3 flex flex-col gap-2">
-            <a
-              href={`https://wa.me/${DESK_PHONE.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <MessageCircle size={16} />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-ink">WhatsApp the desk</p>
-                <p className="text-xs text-muted">{DESK_PHONE}</p>
-              </div>
-            </a>
-
-            <a
-              href={`tel:${DESK_PHONE.replace(/\s/g, "")}`}
-              className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <Phone size={16} />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-ink">Call the desk</p>
-                <p className="text-xs text-muted">{DESK_PHONE}</p>
-              </div>
-            </a>
-
             <a
               href={`mailto:${DESK_EMAIL}`}
               className="flex min-h-11 items-center gap-3 rounded-card bg-card shadow-elevation-1 p-3.5"
