@@ -64,23 +64,21 @@ export function Onboarding() {
     setSaving(true);
     setError(null);
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName || null,
-        email,
-        student_id: studentId,
-        phone: `+91${phone}`,
-        whatsapp_same_as_phone: whatsappSame,
-        village,
-        block,
-        floor,
-        room_number: roomNumber,
-        pickup_point: pickupPoint || null,
-        partner_notes: notesOverride,
-        onboarding_complete: true,
-      })
-      .eq("id", user.id);
+    const { error: updateError } = await supabase.from("profiles").upsert({
+      id: user.id,
+      full_name: fullName || null,
+      email,
+      student_id: studentId,
+      phone: `+91${phone}`,
+      whatsapp_same_as_phone: whatsappSame,
+      village,
+      block,
+      floor,
+      room_number: roomNumber,
+      pickup_point: pickupPoint || null,
+      partner_notes: notesOverride,
+      onboarding_complete: true,
+    });
 
     setSaving(false);
 

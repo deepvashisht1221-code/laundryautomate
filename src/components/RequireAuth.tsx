@@ -22,7 +22,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <Navigate to="/partner" replace />;
   }
 
-  if (profile && !profile.onboarding_complete && location.pathname !== "/onboarding") {
+  if (
+    (profile === null || !profile.onboarding_complete) &&
+    location.pathname !== "/onboarding"
+  ) {
     return <Navigate to="/onboarding" replace />;
   }
 
