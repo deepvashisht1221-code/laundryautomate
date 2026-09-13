@@ -18,7 +18,7 @@ type RosterOrder = Pick<Tables<"orders">, "id" | "order_code" | "bag_count"> & {
   profiles: Pick<Tables<"profiles">, "full_name" | "block" | "room_number" | "phone"> | null;
 };
 
-const DEFAULT_CAPACITY = 20;
+const UNLIMITED_CAPACITY = 999999;
 
 function todayStr() {
   return format(new Date(), "yyyy-MM-dd");
@@ -149,7 +149,7 @@ export function PartnerDashboard() {
         date,
         start_time: `${pickupTime}:00`,
         end_time: `${pickupTime}:00`,
-        capacity: DEFAULT_CAPACITY,
+        capacity: UNLIMITED_CAPACITY,
       })),
     );
 
@@ -194,7 +194,7 @@ export function PartnerDashboard() {
           onSubmit={handleCreateSlot}
           className="flex flex-col gap-4 rounded-card bg-card shadow-elevation-1 p-4"
         >
-          <h2 className="text-sm font-semibold text-ink">Add a pickup slot</h2>
+          <h2 className="text-sm font-semibold text-ink">Add a pickup timing</h2>
 
           <div>
             <span className="text-sm text-ink">Student Villages</span>
@@ -257,8 +257,8 @@ export function PartnerDashboard() {
             {creating
               ? "Adding…"
               : villages.length > 1
-                ? `Add slot to ${villages.length} villages`
-                : "Add slot"}
+                ? `Add timing to ${villages.length} villages`
+                : "Add timing"}
           </button>
         </form>
 
@@ -277,7 +277,6 @@ export function PartnerDashboard() {
           <div className="flex flex-col gap-3">
             {slots.map((slot) => {
               const expanded = expandedSlotId === slot.id;
-              const full = slot.booked_count >= slot.capacity;
               return (
                 <div
                   key={slot.id}
@@ -298,8 +297,8 @@ export function PartnerDashboard() {
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5 text-xs text-muted">
                         <Users size={14} />
-                        <span className={cn(full && "font-semibold text-warning")}>
-                          {slot.booked_count}/{slot.capacity}
+                        <span>
+                          {slot.booked_count} booked
                         </span>
                       </div>
                       <ChevronDown

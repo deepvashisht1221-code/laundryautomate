@@ -626,22 +626,15 @@ export function Schedule() {
                 </p>
               ) : (
                 daySlots.map((slot) => {
-                  const remaining = slot.capacity - slot.booked_count;
-                  const full = remaining <= 0;
                   const selected = slot.id === selectedSlotId;
                   return (
                     <button
                       key={slot.id}
                       type="button"
-                      disabled={full}
                       onClick={() => setSelectedSlotId(slot.id)}
                       className={cn(
                         "flex items-center justify-between rounded-card border p-3.5 text-left",
-                        full
-                          ? "cursor-not-allowed border-line bg-card opacity-50"
-                          : selected
-                            ? "border-primary bg-primary-soft"
-                            : "border-line bg-card",
+                        selected ? "border-primary bg-primary-soft" : "border-line bg-card",
                       )}
                     >
                       <span>
@@ -651,9 +644,6 @@ export function Schedule() {
                         <span className="text-xs text-muted">
                           {slot.partner?.full_name ?? "Partner"}
                         </span>
-                      </span>
-                      <span className="text-sm text-muted">
-                        {full ? "Full" : `${remaining} spot${remaining === 1 ? "" : "s"} left`}
                       </span>
                     </button>
                   );
