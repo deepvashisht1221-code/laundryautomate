@@ -1,9 +1,11 @@
 import type { Enums } from "@/types/database";
 
+const BLOCKS_A_TO_J = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+
 export const VILLAGE_BLOCKS: Record<string, string[]> = {
-  "Student Village 1": ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"],
-  "Student Village 2": ["E1", "E2", "E3", "E4", "E5", "E6"],
-  "Student Village 3": ["F1", "F2", "F3", "F4", "F5", "F6"],
+  "Student Village 1": BLOCKS_A_TO_J,
+  "Student Village 2": BLOCKS_A_TO_J,
+  "Student Village 3": BLOCKS_A_TO_J,
 };
 
 export const FLOORS = ["Ground floor", "1st floor", "2nd floor", "3rd floor", "4th floor"];
