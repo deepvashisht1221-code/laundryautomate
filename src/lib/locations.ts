@@ -6,6 +6,7 @@ export const VILLAGE_BLOCKS: Record<string, string[]> = {
   "Student Village 1": BLOCKS_A_TO_J,
   "Student Village 2": BLOCKS_A_TO_J,
   "Student Village 3": BLOCKS_A_TO_J,
+  "Student Village 4": BLOCKS_A_TO_J,
 };
 
 export const FLOORS = ["Ground floor", "1st floor", "2nd floor", "3rd floor", "4th floor"];
