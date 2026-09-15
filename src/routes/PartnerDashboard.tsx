@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, Camera, Check, ChevronDown, LogOut, Plus, Users, X } from "lucide-react";
+import { Bell, Camera, Check, ChevronDown, Image, LogOut, Plus, Users, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -53,7 +53,8 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
   const [busy, setBusy] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [reminderSent, setReminderSent] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const pendingKindRef = useRef<"pickup" | "dropoff" | null>(null);
 
   async function sendPaymentReminder() {
@@ -73,9 +74,9 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
     setReminderSent(true);
   }
 
-  function pickPhotoFor(kind: "pickup" | "dropoff") {
+  function pickPhotoFor(kind: "pickup" | "dropoff", source: "camera" | "gallery") {
     pendingKindRef.current = kind;
-    fileInputRef.current?.click();
+    (source === "camera" ? cameraInputRef : galleryInputRef).current?.click();
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -164,10 +165,19 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
   return (
     <div className="flex flex-col gap-2.5 py-2.5 text-sm">
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        onChange={(e) => {
+          void handleFileSelected(e);
+        }}
+        className="hidden"
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
         onChange={(e) => {
           void handleFileSelected(e);
         }}
@@ -191,15 +201,31 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
       </div>
 
       {(order.status === "scheduled" || order.status === "awaiting_pickup") && (
-        <button
-          type="button"
-          onClick={() => pickPhotoFor("pickup")}
-          disabled={busy}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          <Camera size={14} />
-          {busy ? "Uploading…" : "Mark picked up"}
-        </button>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium text-ink">
+            {busy ? "Uploading…" : "Mark picked up — add a photo"}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => pickPhotoFor("pickup", "camera")}
+              disabled={busy}
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              <Camera size={14} />
+              Camera
+            </button>
+            <button
+              type="button"
+              onClick={() => pickPhotoFor("pickup", "gallery")}
+              disabled={busy}
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary text-xs font-semibold text-primary disabled:opacity-60"
+            >
+              <Image size={14} />
+              Gallery
+            </button>
+          </div>
+        </div>
       )}
 
       {order.status === "picked_up" && (
@@ -216,15 +242,31 @@ function RosterOrderCard({ order, onChanged }: { order: RosterOrder; onChanged: 
       )}
 
       {order.status === "washing" && (
-        <button
-          type="button"
-          onClick={() => pickPhotoFor("dropoff")}
-          disabled={busy}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          <Camera size={14} />
-          {busy ? "Uploading…" : "Mark delivered"}
-        </button>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium text-ink">
+            {busy ? "Uploading…" : "Mark delivered — add a photo"}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => pickPhotoFor("dropoff", "camera")}
+              disabled={busy}
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-primary text-xs font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              <Camera size={14} />
+              Camera
+            </button>
+            <button
+              type="button"
+              onClick={() => pickPhotoFor("dropoff", "gallery")}
+              disabled={busy}
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-primary text-xs font-semibold text-primary disabled:opacity-60"
+            >
+              <Image size={14} />
+              Gallery
+            </button>
+          </div>
+        </div>
       )}
 
       {order.status === "delivered" && order.payment_status !== "covered_by_plan" && (
