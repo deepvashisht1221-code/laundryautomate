@@ -395,6 +395,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          partner_id: string | null
           price: number
           pricing_unit: Database["public"]["Enums"]["pricing_unit_type"]
           turnaround_hours: number
@@ -405,6 +406,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          partner_id?: string | null
           price: number
           pricing_unit: Database["public"]["Enums"]["pricing_unit_type"]
           turnaround_hours: number
@@ -415,11 +417,20 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          partner_id?: string | null
           price?: number
           pricing_unit?: Database["public"]["Enums"]["pricing_unit_type"]
           turnaround_hours?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_types_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       slots: {
         Row: {

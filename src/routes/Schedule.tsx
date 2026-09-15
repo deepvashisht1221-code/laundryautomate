@@ -254,11 +254,14 @@ export function Schedule() {
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const loadServices = useCallback(() => {
+    if (!selectedPartnerId) return;
     setServicesError(false);
+    setServices(null);
     supabase
       .from("service_types")
       .select("*")
       .eq("is_active", true)
+      .eq("partner_id", selectedPartnerId)
       .order("price")
       .then(({ data, error }) => {
         if (error) {
@@ -267,11 +270,15 @@ export function Schedule() {
         }
         setServices(data ?? []);
       });
-  }, []);
+  }, [selectedPartnerId]);
 
   useEffect(() => {
     loadServices();
   }, [loadServices]);
+
+  useEffect(() => {
+    setSelectedServiceId(null);
+  }, [selectedPartnerId]);
 
   useEffect(() => {
     if (!user) return;
