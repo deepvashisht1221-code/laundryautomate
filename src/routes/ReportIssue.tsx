@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Camera, Check, X } from "lucide-react";
+import { Camera, Check, Image, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import type { Enums } from "@/types/database";
@@ -185,17 +185,30 @@ export function ReportIssue() {
                   </div>
                 ))}
                 {photos.length < MAX_PHOTOS && (
-                  <label className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed border-line text-muted">
-                    <Camera size={18} />
-                    <span className="text-[10px]">Add</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleAddPhotos}
-                      className="hidden"
-                    />
-                  </label>
+                  <>
+                    <label className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed border-line text-muted">
+                      <Camera size={18} />
+                      <span className="text-[10px]">Camera</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleAddPhotos}
+                        className="hidden"
+                      />
+                    </label>
+                    <label className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed border-line text-muted">
+                      <Image size={18} />
+                      <span className="text-[10px]">Gallery</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleAddPhotos}
+                        className="hidden"
+                      />
+                    </label>
+                  </>
                 )}
               </div>
             </div>

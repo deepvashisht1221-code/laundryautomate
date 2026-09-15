@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle, Camera } from "lucide-react";
+import { ChevronLeft, Check, Phone, MessageCircle, Star, AlertTriangle, Camera, Image } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -437,16 +437,29 @@ export function OrderDetail() {
                     className="max-h-56 w-full rounded-control object-contain"
                   />
                 ) : (
-                  <label className="flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-line py-6 text-muted">
-                    <Camera size={20} />
-                    <span className="text-sm">Upload payment screenshot</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePickPaymentFile}
-                      className="hidden"
-                    />
-                  </label>
+                  <div className="flex gap-2">
+                    <label className="flex h-24 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-line text-muted">
+                      <Camera size={20} />
+                      <span className="text-sm">Take photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handlePickPaymentFile}
+                        className="hidden"
+                      />
+                    </label>
+                    <label className="flex h-24 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-line text-muted">
+                      <Image size={20} />
+                      <span className="text-sm">Choose photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePickPaymentFile}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 )}
                 {paymentError && <p className="text-sm text-danger">{paymentError}</p>}
                 {paymentFile && (
